@@ -22,8 +22,28 @@ public class Main extends android.app.Activity
               {
                 final android.location.LocationProvider ThisProvider =
                     Locator.getProvider(ProviderName);
-                System.err.printf("Provider: %s = %s\n", ProviderName, ThisProvider.getName());
-              /* more TBD */
+                System.err.printf
+                  (
+                    "Provider %s: accuracy = %d, powerreq = %d, costs = %s\n",
+                    ProviderName,
+                    ThisProvider.getAccuracy(),
+                    ThisProvider.getPowerRequirement(),
+                    ThisProvider.hasMonetaryCost() ? "Y" : "N"
+                  );
+                System.err.printf
+                  (
+                    " req cell = %s, req net = %s, req sat = %s\n",
+                    ThisProvider.requiresCell() ? "Y" : "N",
+                    ThisProvider.requiresNetwork() ? "Y" : "N",
+                    ThisProvider.requiresSatellite() ? "Y" : "N"
+                  );
+                System.err.printf
+                  (
+                    " does altitude = %s, does bearing = %s, does speed = %s\n",
+                    ThisProvider.supportsAltitude(),
+                    ThisProvider.supportsBearing(),
+                    ThisProvider.supportsSpeed()
+                  );
               } /*for*/
           }
         else
