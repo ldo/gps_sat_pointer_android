@@ -311,7 +311,7 @@ public class Main extends android.app.Activity
         Locator.requestLocationUpdates
           (
             /*provider =*/ android.location.LocationManager.GPS_PROVIDER,
-            /*minTime =*/ 60 * 1000,
+            /*minTime =*/ 10 * 1000,
             /*minDistance =*/ 0,
             /*listener =*/ LetMeKnow
           );
