@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="SensorTest" default="help">
+<project name="GPSTest" default="help">
 
 <!-- The local.properties file is created and updated by the 'android'
      tool.
@@ -56,16 +56,16 @@
     <target name="signed" depends="release">
         <signjar
             keystore="${keystore.path}" alias="${keystore.alias}" storepass="${keystore.password}"
-            jar="bin/SensorTest-unsigned.apk"
-            signedjar="bin/SensorTest-unaligned.apk"
+            jar="bin/GPSTest-unsigned.apk"
+            signedjar="bin/GPSTest-unaligned.apk"
             verbose="true"
         />
         <exec executable="${sdk.dir}/tools/zipalign">
             <arg value="-f"/>
             <arg value="-v"/>
             <arg value="4"/>
-            <arg value="bin/SensorTest-unaligned.apk"/>
-            <arg value="bin/SensorTest.apk"/>
+            <arg value="bin/GPSTest-unaligned.apk"/>
+            <arg value="bin/GPSTest.apk"/>
         </exec>
     </target>
 
