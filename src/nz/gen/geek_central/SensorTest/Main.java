@@ -9,6 +9,7 @@ public class Main extends android.app.Activity
     android.widget.TextView Message;
     android.os.Handler RunBG;
     android.location.LocationListener LetMeKnow;
+    StatusGetter PosUpdates;
     android.location.GpsStatus LastGPS;
     int LastStatus = -1;
     int NrSatellites = -1;
@@ -290,7 +291,23 @@ public class Main extends android.app.Activity
         RunBG = new android.os.Handler();
         QueueUpdate();
         LetMeKnow = new Navigator();
-        Locator.addGpsStatusListener(new StatusGetter());
+        PosUpdates = new StatusGetter();
+      } /*onCreate*/
+
+    @Override
+    public void onPause()
+      {
+        super.onPause();
+      /* conserve battery: */
+        Locator.removeGpsStatusListener(PosUpdates);
+        Locator.removeUpdates(LetMeKnow);
+      } /*onPause*/
+
+    @Override
+    public void onResume()
+      {
+        super.onResume();
+        Locator.addGpsStatusListener(PosUpdates);
         Locator.requestLocationUpdates
           (
             /*provider =*/ android.location.LocationManager.GPS_PROVIDER,
@@ -298,6 +315,6 @@ public class Main extends android.app.Activity
             /*minDistance =*/ 0,
             /*listener =*/ LetMeKnow
           );
-      } /*onCreate*/
+      } /*onResume*/
 
   } /*Main*/
