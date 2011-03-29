@@ -28,14 +28,14 @@ public class Main extends android.app.Activity
                     ProviderName,
                     ThisProvider.getAccuracy(),
                     ThisProvider.getPowerRequirement(),
-                    ThisProvider.hasMonetaryCost() ? "Y" : "N"
+                    ThisProvider.hasMonetaryCost()
                   );
                 System.err.printf
                   (
                     " req cell = %s, req net = %s, req sat = %s\n",
-                    ThisProvider.requiresCell() ? "Y" : "N",
-                    ThisProvider.requiresNetwork() ? "Y" : "N",
-                    ThisProvider.requiresSatellite() ? "Y" : "N"
+                    ThisProvider.requiresCell(),
+                    ThisProvider.requiresNetwork(),
+                    ThisProvider.requiresSatellite()
                   );
                 System.err.printf
                   (
