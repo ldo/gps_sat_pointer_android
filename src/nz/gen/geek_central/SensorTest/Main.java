@@ -9,8 +9,10 @@ public class Main extends android.app.Activity
     android.widget.TextView Message;
     android.os.Handler RunBG;
     android.location.LocationListener LetMeKnow;
+    android.location.GpsStatus LastGPS;
     int LastStatus = -1;
     int NrSatellites = -1;
+    java.util.Set<String> BundleKeys = null;
 
     void UpdateMessage()
       {
@@ -34,24 +36,27 @@ public class Main extends android.app.Activity
                     "GPS enabled: %s.\n",
                     Locator.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
                   );
-                int GotSats = 0;
-                for (android.location.GpsSatellite ThisSat : GPS.getSatellites())
+                if (LastGPS != null)
                   {
-                    ++GotSats;
-                    Msg.printf
-                      (
-                        "Sat %d azi %.3f° elev %.3f° prn %d snr %.2f almanac %s ephemeris %s used %s\n",
-                        GotSats,
-                        ThisSat.getAzimuth(),
-                        ThisSat.getElevation(),
-                        ThisSat.getPrn(),
-                        ThisSat.getSnr(),
-                        ThisSat.hasAlmanac(),
-                        ThisSat.hasEphemeris(),
-                        ThisSat.usedInFix()
-                      );
-                  } /*for*/
-                Msg.printf("Sats found: %d\n", GotSats);
+                    int GotSats = 0;
+                    for (android.location.GpsSatellite ThisSat : LastGPS.getSatellites())
+                      {
+                        ++GotSats;
+                        Msg.printf
+                          (
+                            "Sat %d azi %.0f° elev %.0f° prn %d snr %.2fdB almanac %s ephemeris %s used %s\n",
+                            GotSats,
+                            ThisSat.getAzimuth(), /* returned only to nearest degree */
+                            ThisSat.getElevation(), /* returned only to nearest degree */
+                            ThisSat.getPrn(),
+                            ThisSat.getSnr(),
+                            ThisSat.hasAlmanac(),
+                            ThisSat.hasEphemeris(),
+                            ThisSat.usedInFix()
+                          );
+                      } /*for*/
+                    Msg.printf("Sats found: %d\n", GotSats);
+                  } /*if*/
                 if (GPSLast != null)
                   {
                     Msg.printf
@@ -85,6 +90,25 @@ public class Main extends android.app.Activity
                         LastStatus,
                         NrSatellites
                       );
+                    Msg.print("Last bundle keys: ");
+                    if (BundleKeys != null)
+                      {
+                        boolean First = true;
+                        for (String Key : BundleKeys.toArray(new String[BundleKeys.size()]))
+                          {
+                            if (!First)
+                              {
+                                Msg.print(", ");
+                              } /*if*/
+                            First = false;
+                            Msg.print(Key);
+                          } /*for*/
+                      }
+                    else
+                      {
+                        Msg.print("N/A");
+                      } /*if*/
+                    Msg.println();
                     Msg.print("Altitude: ");
                     if (GPSLast.hasAltitude())
                       {
@@ -140,6 +164,19 @@ public class Main extends android.app.Activity
         RunBG.postDelayed(new Updater(), 60 * 1000);
       } /*QueueUpdate*/
 
+    class StatusGetter implements android.location.GpsStatus.Listener
+      {
+
+        public void onGpsStatusChanged
+          (
+            int Event
+          )
+          {
+            LastGPS = Locator.getGpsStatus(LastGPS);
+          } /*onGpsStatusChanged*/
+
+      } /*StatusGetter*/
+
     class Navigator implements android.location.LocationListener
       {
         public void onLocationChanged
@@ -176,10 +213,12 @@ public class Main extends android.app.Activity
             LastStatus = Status;
             if (Extras != null)
               {
+                BundleKeys = Extras.keySet();
                 NrSatellites = Extras.getInt("satellites");
               }
             else
               {
+                BundleKeys = null;
                 NrSatellites = -1;
               } /*if*/
             UpdateMessage();
@@ -251,6 +290,7 @@ public class Main extends android.app.Activity
         RunBG = new android.os.Handler();
         QueueUpdate();
         LetMeKnow = new Navigator();
+        Locator.addGpsStatusListener(new StatusGetter());
         Locator.requestLocationUpdates
           (
             /*provider =*/ android.location.LocationManager.GPS_PROVIDER,
