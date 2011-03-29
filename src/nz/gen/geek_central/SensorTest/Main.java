@@ -68,6 +68,79 @@ public class Main extends android.app.Activity
                 GPS.getMaxSatellites(),
                 GPS.getTimeToFirstFix()
               );
+              {
+                final android.location.Location GPSLast =
+                    Locator.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER);
+                final android.widget.TextView Message =
+                    (android.widget.TextView)findViewById(R.id.message);
+                final java.io.ByteArrayOutputStream MessageBuf =
+                    new java.io.ByteArrayOutputStream();
+                final java.io.PrintStream Msg = new java.io.PrintStream(MessageBuf);
+                if (GPSLast != null)
+                  {
+                    Msg.printf
+                      (
+                        "Last GPS fix at %s\n",
+                        android.text.format.DateFormat.format
+                          (
+                            "kk:mm:ss E, dd/MMM/yyyy",
+                            GPSLast.getTime()
+                          )
+                      );
+                    Msg.printf
+                      (
+                        "Lat %.6f°, Long %.6f°\n",
+                        GPSLast.getLatitude(),
+                        GPSLast.getLongitude()
+                      );
+                    Msg.print("Accuracy: ");
+                    if (GPSLast.hasAccuracy())
+                      {
+                        Msg.printf("±%.2fm", GPSLast.getAccuracy());
+                      }
+                    else
+                      {
+                        Msg.print("N/A");
+                      } /*if*/
+                    Msg.println();
+                    Msg.print("Altitude: ");
+                    if (GPSLast.hasAltitude())
+                      {
+                        Msg.printf("%.1fm", GPSLast.getAltitude());
+                      }
+                    else
+                      {
+                        Msg.print("N/A");
+                      } /*if*/
+                    Msg.println();
+                    Msg.print("Speed: ");
+                    if (GPSLast.hasSpeed())
+                      {
+                        Msg.printf("%.2f", GPSLast.getSpeed());
+                      }
+                    else
+                      {
+                        Msg.print("N/A");
+                      } /*if*/
+                    Msg.println();
+                    Msg.print("Bearing: ");
+                    if (GPSLast.hasBearing())
+                      {
+                        Msg.printf("%.2f°", GPSLast.getBearing());
+                      }
+                    else
+                      {
+                        Msg.print("N/A");
+                      } /*if*/
+                    Msg.println();
+                  }
+                else
+                  {
+                    Msg.println("No last known GPS location.");
+                  } /*if*/
+                Msg.flush();
+                Message.setText(MessageBuf.toString());
+              }
           }
         else
           {
