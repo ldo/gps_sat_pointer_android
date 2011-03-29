@@ -34,6 +34,24 @@ public class Main extends android.app.Activity
                     "GPS enabled: %s.\n",
                     Locator.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
                   );
+                int GotSats = 0;
+                for (android.location.GpsSatellite ThisSat : GPS.getSatellites())
+                  {
+                    ++GotSats;
+                    Msg.printf
+                      (
+                        "Sat %d azi %.3f° elev %.3f° prn %d snr %.2f almanac %s ephemeris %s used %s\n",
+                        GotSats,
+                        ThisSat.getAzimuth(),
+                        ThisSat.getElevation(),
+                        ThisSat.getPrn(),
+                        ThisSat.getSnr(),
+                        ThisSat.hasAlmanac(),
+                        ThisSat.hasEphemeris(),
+                        ThisSat.usedInFix()
+                      );
+                  } /*for*/
+                Msg.printf("Sats found: %d\n", GotSats);
                 if (GPSLast != null)
                   {
                     Msg.printf
@@ -61,6 +79,12 @@ public class Main extends android.app.Activity
                         Msg.print("N/A");
                       } /*if*/
                     Msg.println();
+                    Msg.printf
+                      (
+                        "Status: %d, nr satellites: %d\n",
+                        LastStatus,
+                        NrSatellites
+                      );
                     Msg.print("Altitude: ");
                     if (GPSLast.hasAltitude())
                       {
