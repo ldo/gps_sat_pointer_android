@@ -8,6 +8,9 @@ public class Main extends android.app.Activity
     android.location.LocationManager Locator;
     android.widget.TextView Message;
     android.os.Handler RunBG;
+    android.location.LocationListener LetMeKnow;
+    int LastStatus = -1;
+    int NrSatellites = -1;
 
     void UpdateMessage()
       {
@@ -26,6 +29,11 @@ public class Main extends android.app.Activity
                 final java.io.ByteArrayOutputStream MessageBuf =
                     new java.io.ByteArrayOutputStream();
                 final java.io.PrintStream Msg = new java.io.PrintStream(MessageBuf);
+                Msg.printf
+                  (
+                    "GPS enabled: %s.\n",
+                    Locator.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
+                  );
                 if (GPSLast != null)
                   {
                     Msg.printf
@@ -108,6 +116,53 @@ public class Main extends android.app.Activity
         RunBG.postDelayed(new Updater(), 60 * 1000);
       } /*QueueUpdate*/
 
+    class Navigator implements android.location.LocationListener
+      {
+        public void onLocationChanged
+          (
+            android.location.Location NewLocation
+          )
+          {
+            UpdateMessage();
+          } /*onLocationChanged*/
+
+        public void onProviderDisabled
+          (
+            String ProviderName
+          )
+          {
+            UpdateMessage();
+          } /*onProviderDisabled*/
+
+        public void onProviderEnabled
+          (
+            String ProviderName
+          )
+          {
+            UpdateMessage();
+          } /*onProviderEnabled*/
+
+        public void onStatusChanged
+          (
+            String ProviderName,
+            int Status,
+            android.os.Bundle Extras
+          )
+          {
+            LastStatus = Status;
+            if (Extras != null)
+              {
+                NrSatellites = Extras.getInt("satellites");
+              }
+            else
+              {
+                NrSatellites = -1;
+              } /*if*/
+            UpdateMessage();
+          } /*onStatusChanged*/
+
+      } /*Navigator*/
+
     @Override
     public void onCreate
       (
@@ -171,6 +226,14 @@ public class Main extends android.app.Activity
       /* UpdateMessage(); */ /* check QueueUpdate works */
         RunBG = new android.os.Handler();
         QueueUpdate();
+        LetMeKnow = new Navigator();
+        Locator.requestLocationUpdates
+          (
+            /*provider =*/ android.location.LocationManager.GPS_PROVIDER,
+            /*minTime =*/ 60 * 1000,
+            /*minDistance =*/ 0,
+            /*listener =*/ LetMeKnow
+          );
       } /*onCreate*/
 
   } /*Main*/
