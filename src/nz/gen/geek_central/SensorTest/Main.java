@@ -5,62 +5,14 @@ package nz.gen.geek_central.GPSTest;
 
 public class Main extends android.app.Activity
   {
+    android.location.LocationManager Locator;
+    android.widget.TextView Message;
+    android.os.Handler RunBG;
 
-    @Override
-    public void onCreate
-      (
-        android.os.Bundle savedInstanceState
-      )
+    void UpdateMessage()
       {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        final android.location.LocationManager Locator =
-            (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
         if (Locator != null)
           {
-            for (String ProviderName : Locator.getProviders(false))
-              {
-                final android.location.LocationProvider ThisProvider =
-                    Locator.getProvider(ProviderName);
-                System.err.printf
-                  (
-                    "Provider %s: accuracy = %d, powerreq = %d, costs = %s\n",
-                    ProviderName,
-                    ThisProvider.getAccuracy(),
-                    ThisProvider.getPowerRequirement(),
-                    ThisProvider.hasMonetaryCost()
-                  );
-                System.err.printf
-                  (
-                    " req cell = %s, req net = %s, req sat = %s\n",
-                    ThisProvider.requiresCell(),
-                    ThisProvider.requiresNetwork(),
-                    ThisProvider.requiresSatellite()
-                  );
-                System.err.printf
-                  (
-                    " does altitude = %s, does bearing = %s, does speed = %s\n",
-                    ThisProvider.supportsAltitude(),
-                    ThisProvider.supportsBearing(),
-                    ThisProvider.supportsSpeed()
-                  );
-                final android.location.Location LastKnown =
-                    Locator.getLastKnownLocation(ProviderName);
-                if (LastKnown != null)
-                  {
-                    final StringBuilder Dump = new StringBuilder();
-                    LastKnown.dump(new android.util.StringBuilderPrinter(Dump), "\n  loc:");
-                    System.err.printf
-                      (
-                        " last known location: %s\n",
-                        Dump.toString()
-                      );
-                  }
-                else
-                  {
-                    System.err.println(" no last known location");
-                  } /*if*/
-              } /*for*/
             final android.location.GpsStatus GPS = Locator.getGpsStatus(null);
             System.err.printf
               (
@@ -71,8 +23,6 @@ public class Main extends android.app.Activity
               {
                 final android.location.Location GPSLast =
                     Locator.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER);
-                final android.widget.TextView Message =
-                    (android.widget.TextView)findViewById(R.id.message);
                 final java.io.ByteArrayOutputStream MessageBuf =
                     new java.io.ByteArrayOutputStream();
                 final java.io.PrintStream Msg = new java.io.PrintStream(MessageBuf);
@@ -141,11 +91,86 @@ public class Main extends android.app.Activity
                 Msg.flush();
                 Message.setText(MessageBuf.toString());
               }
+          } /*if*/
+      } /*UpdateMessage*/
+
+    class Updater implements Runnable
+      {
+        public void run()
+          {
+            UpdateMessage();
+            QueueUpdate();
+          } /*run*/
+      } /*Updater*/
+
+    void QueueUpdate()
+      {
+        RunBG.postDelayed(new Updater(), 60 * 1000);
+      } /*QueueUpdate*/
+
+    @Override
+    public void onCreate
+      (
+        android.os.Bundle savedInstanceState
+      )
+      {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        Locator = (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
+        Message = (android.widget.TextView)findViewById(R.id.message);
+        if (Locator != null)
+          {
+            for (String ProviderName : Locator.getProviders(false))
+              {
+                final android.location.LocationProvider ThisProvider =
+                    Locator.getProvider(ProviderName);
+                System.err.printf
+                  (
+                    "Provider %s: accuracy = %d, powerreq = %d, costs = %s\n",
+                    ProviderName,
+                    ThisProvider.getAccuracy(),
+                    ThisProvider.getPowerRequirement(),
+                    ThisProvider.hasMonetaryCost()
+                  );
+                System.err.printf
+                  (
+                    " req cell = %s, req net = %s, req sat = %s\n",
+                    ThisProvider.requiresCell(),
+                    ThisProvider.requiresNetwork(),
+                    ThisProvider.requiresSatellite()
+                  );
+                System.err.printf
+                  (
+                    " does altitude = %s, does bearing = %s, does speed = %s\n",
+                    ThisProvider.supportsAltitude(),
+                    ThisProvider.supportsBearing(),
+                    ThisProvider.supportsSpeed()
+                  );
+                final android.location.Location LastKnown =
+                    Locator.getLastKnownLocation(ProviderName);
+                if (LastKnown != null)
+                  {
+                    final StringBuilder Dump = new StringBuilder();
+                    LastKnown.dump(new android.util.StringBuilderPrinter(Dump), "\n  loc:");
+                    System.err.printf
+                      (
+                        " last known location: %s\n",
+                        Dump.toString()
+                      );
+                  }
+                else
+                  {
+                    System.err.println(" no last known location");
+                  } /*if*/
+              } /*for*/
           }
         else
           {
             System.err.println("GPSTest: No location service found!");
           } /*if*/
+      /* UpdateMessage(); */ /* check QueueUpdate works */
+        RunBG = new android.os.Handler();
+        QueueUpdate();
       } /*onCreate*/
 
   } /*Main*/
