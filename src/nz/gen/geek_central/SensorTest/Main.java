@@ -12,7 +12,6 @@ public class Main extends android.app.Activity
     android.location.GpsStatus LastGPS;
     int LastStatus = -1;
     int NrSatellites = -1;
-    java.util.Set<String> BundleKeys = null;
 
     void UpdateMessage()
       {
@@ -90,25 +89,6 @@ public class Main extends android.app.Activity
                         LastStatus,
                         NrSatellites
                       );
-                    Msg.print("Last bundle keys: ");
-                    if (BundleKeys != null)
-                      {
-                        boolean First = true;
-                        for (String Key : BundleKeys.toArray(new String[BundleKeys.size()]))
-                          {
-                            if (!First)
-                              {
-                                Msg.print(", ");
-                              } /*if*/
-                            First = false;
-                            Msg.print(Key);
-                          } /*for*/
-                      }
-                    else
-                      {
-                        Msg.print("N/A");
-                      } /*if*/
-                    Msg.println();
                     Msg.print("Altitude: ");
                     if (GPSLast.hasAltitude())
                       {
@@ -199,12 +179,10 @@ public class Main extends android.app.Activity
             LastStatus = Status;
             if (Extras != null)
               {
-                BundleKeys = Extras.keySet();
                 NrSatellites = Extras.getInt("satellites");
               }
             else
               {
-                BundleKeys = null;
                 NrSatellites = -1;
               } /*if*/
             UpdateMessage();
