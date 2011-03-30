@@ -6,6 +6,8 @@ package nz.gen.geek_central.GPSTest;
 public class Main extends android.app.Activity
   {
     android.location.LocationManager Locator;
+    android.widget.ListView SatsListView;
+    android.widget.ArrayAdapter<String> SatsList;
     android.widget.TextView Message;
     android.location.LocationListener LetMeKnow;
     StatusGetter PosUpdates;
@@ -38,23 +40,28 @@ public class Main extends android.app.Activity
                 if (LastGPS != null)
                   {
                     int GotSats = 0;
+                    SatsList.clear();
                     for (android.location.GpsSatellite ThisSat : LastGPS.getSatellites())
                       {
                         ++GotSats;
-                        Msg.printf
+                        SatsList.add
                           (
-                            "Sat %d azi %.0f° elev %.0f° prn %d snr %.2fdB almanac %s ephemeris %s used %s\n",
-                            GotSats,
-                            ThisSat.getAzimuth(), /* returned only to nearest degree */
-                            ThisSat.getElevation(), /* returned only to nearest degree */
-                            ThisSat.getPrn(),
-                            ThisSat.getSnr(),
-                            ThisSat.hasAlmanac(),
-                            ThisSat.hasEphemeris(),
-                            ThisSat.usedInFix()
+                            String.format
+                              (
+                                "Sat %d azi %.0f° elev %.0f° prn %d snr %.2fdB almanac %s ephemeris %s used %s",
+                                GotSats,
+                                ThisSat.getAzimuth(), /* returned only to nearest degree */
+                                ThisSat.getElevation(), /* returned only to nearest degree */
+                                ThisSat.getPrn(),
+                                ThisSat.getSnr(),
+                                ThisSat.hasAlmanac(),
+                                ThisSat.hasEphemeris(),
+                                ThisSat.usedInFix()
+                              )
                           );
                       } /*for*/
                     Msg.printf("Sats found: %d\n", GotSats);
+                    SatsList.notifyDataSetChanged();
                   } /*if*/
                 if (GPSLast != null)
                   {
@@ -199,6 +206,13 @@ public class Main extends android.app.Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         Locator = (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
+        SatsListView = (android.widget.ListView)findViewById(R.id.sats_list);
+        SatsList = new android.widget.ArrayAdapter<String>
+          (
+            this,
+            R.layout.satellite_listitem
+          );
+        SatsListView.setAdapter(SatsList);
         Message = (android.widget.TextView)findViewById(R.id.message);
         if (Locator != null)
           {
