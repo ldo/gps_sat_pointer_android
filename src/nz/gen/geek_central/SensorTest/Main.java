@@ -7,7 +7,6 @@ public class Main extends android.app.Activity
   {
     android.location.LocationManager Locator;
     android.widget.TextView Message;
-    android.os.Handler RunBG;
     android.location.LocationListener LetMeKnow;
     StatusGetter PosUpdates;
     android.location.GpsStatus LastGPS;
@@ -151,20 +150,6 @@ public class Main extends android.app.Activity
           } /*if*/
       } /*UpdateMessage*/
 
-    class Updater implements Runnable
-      {
-        public void run()
-          {
-            UpdateMessage();
-            QueueUpdate();
-          } /*run*/
-      } /*Updater*/
-
-    void QueueUpdate()
-      {
-        RunBG.postDelayed(new Updater(), 60 * 1000);
-      } /*QueueUpdate*/
-
     class StatusGetter implements android.location.GpsStatus.Listener
       {
 
@@ -287,9 +272,7 @@ public class Main extends android.app.Activity
           {
             System.err.println("GPSTest: No location service found!");
           } /*if*/
-      /* UpdateMessage(); */ /* check QueueUpdate works */
-        RunBG = new android.os.Handler();
-        QueueUpdate();
+        UpdateMessage();
         LetMeKnow = new Navigator();
         PosUpdates = new StatusGetter();
       } /*onCreate*/
