@@ -40,10 +40,15 @@ public class Main extends android.app.Activity
                 if (LastGPS != null)
                   {
                     int GotSats = 0;
+                    int UsedSats = 0;
                     SatsList.clear();
                     for (android.location.GpsSatellite ThisSat : LastGPS.getSatellites())
                       {
                         ++GotSats;
+                        if (ThisSat.usedInFix())
+                          {
+                            ++UsedSats;
+                          } /*if*/
                         SatsList.add
                           (
                             String.format
@@ -60,7 +65,7 @@ public class Main extends android.app.Activity
                               )
                           );
                       } /*for*/
-                    Msg.printf("Sats found: %d\n", GotSats);
+                    Msg.printf("Sats used/found: %d/%d\n", UsedSats, GotSats);
                     SatsList.notifyDataSetChanged();
                   } /*if*/
                 if (GPSLast != null)
