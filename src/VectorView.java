@@ -66,6 +66,9 @@ public class VectorView extends android.view.View
     float OrientElev = 0.0f;
     Vec3f OrientVector = new Vec3f(0.0f, -1.0f, 0.0f);
     SatInfo[] Sats = {};
+    android.os.Handler RunTask;
+    int FlashPrn = -1;
+    Runnable NextUnflash = null;
 
     public VectorView
       (
@@ -74,7 +77,34 @@ public class VectorView extends android.view.View
       )
       {
         super(TheContext, TheAttributes);
+        RunTask = new android.os.Handler();
       } /*VectorView*/
+
+    class FlashResetter implements Runnable
+      {
+        VectorView Parent;
+        boolean DidRun;
+
+        public FlashResetter
+          (
+            VectorView Parent
+          )
+          {
+            this.Parent = Parent;
+            DidRun = false;
+          } /*FlashResetter*/
+
+        public void run()
+          {
+            if (!DidRun)
+              {
+                Parent.FlashPrn = -1; /* clear highlight */
+                Parent.invalidate();
+                DidRun = true;
+              } /*if*/
+          } /*run*/
+
+      } /*FlashResetter*/
 
     public void SetOrientation
       (
@@ -118,6 +148,26 @@ public class VectorView extends android.view.View
         this.Sats = NewSats.toArray(new SatInfo[NewSats.size()]);
         invalidate();
       } /*SetSats*/
+
+    public void FlashSat
+      (
+        int Prn
+      )
+      /* temporarily highlight the part of the graphic representing the specified satellite. */
+      {
+        if (NextUnflash != null)
+          {
+          /* Note there might be a race condition here! Not that it matters for what
+            NextUnflash does. */
+            RunTask.removeCallbacks(NextUnflash);
+            NextUnflash.run();
+            NextUnflash = null;
+          } /*if*/
+        FlashPrn = Prn;
+        NextUnflash = new FlashResetter(this);
+        RunTask.postDelayed(NextUnflash, 250);
+        invalidate();
+      } /*FlashSat*/
 
     @Override
     protected void onDraw
@@ -164,7 +214,8 @@ public class VectorView extends android.view.View
                   (
                     String.format
                       (
-                        "(%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f)(%.2f, %.2f) = (%.2f, %.2f, %.2f)",
+                        "%d(%d = %s) (%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f)(%.2f, %.2f) = (%.2f, %.2f, %.2f)",
+                        ThisSat.Prn, FlashPrn, ThisSat.Prn == FlashPrn ? "Y" : "N",
                         - AziSin * ElevCos, - AziCos * ElevCos, ElevSin,
                         OrientVector.x, OrientVector.y, OrientVector.z,
                         OrientAzi, OrientElev,
@@ -193,7 +244,17 @@ public class VectorView extends android.view.View
               );
             V.lineTo(- BaseWidth * D.y, + BaseWidth * D.x);
             V.close();
-            Draw.drawPath(V, GraphicsUseful.FillWithColor(0xffeedf09));
+            Draw.drawPath
+              (
+                V,
+                GraphicsUseful.FillWithColor
+                  (
+                    ThisSat.Prn == FlashPrn ?
+                        0xffce15ee
+                    :
+                        0xffeedf09
+                  )
+              );
           } /*for*/
         Draw.restore();
       } /*onDraw*/

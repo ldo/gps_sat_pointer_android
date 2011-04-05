@@ -7,9 +7,36 @@ import android.hardware.SensorManager;
 
 public class Main extends android.app.Activity
   {
+    class SatItem
+      {
+        String Info;
+        int Prn;
+
+        public SatItem
+          (
+            String Info,
+            int Prn
+          )
+          {
+            this.Info = Info;
+            this.Prn = Prn;
+          } /*SatItem*/
+
+        public String toString()
+          {
+            return Info;
+          } /*toString*/
+
+        public int GetPrn()
+          {
+            return Prn;
+          } /*GetPrn*/
+
+      } /*SatItem*/
+
     android.location.LocationManager Locator;
     android.widget.ListView SatsListView;
-    android.widget.ArrayAdapter<String> SatsList;
+    android.widget.ArrayAdapter<SatItem> SatsList;
     android.widget.TextView Message;
     VectorView Graphical;
 
@@ -58,17 +85,21 @@ public class Main extends android.app.Activity
                           } /*if*/
                         SatsList.add
                           (
-                            String.format
+                            new SatItem
                               (
-                                "Sat %d azi %.0f° elev %.0f° prn %d snr %.2fdB almanac %s ephemeris %s used %s",
-                                GotSats,
-                                ThisSat.getAzimuth(), /* returned only to nearest degree */
-                                ThisSat.getElevation(), /* returned only to nearest degree */
-                                ThisSat.getPrn(),
-                                ThisSat.getSnr(),
-                                ThisSat.hasAlmanac(),
-                                ThisSat.hasEphemeris(),
-                                ThisSat.usedInFix()
+                                String.format
+                                  (
+                                    "Sat %d azi %.0f° elev %.0f° prn %d snr %.2fdB almanac %s ephemeris %s used %s",
+                                    GotSats,
+                                    ThisSat.getAzimuth(), /* returned only to nearest degree */
+                                    ThisSat.getElevation(), /* returned only to nearest degree */
+                                    ThisSat.getPrn(),
+                                    ThisSat.getSnr(),
+                                    ThisSat.hasAlmanac(),
+                                    ThisSat.hasEphemeris(),
+                                    ThisSat.usedInFix()
+                                  ),
+                                ThisSat.getPrn()
                               )
                           );
                       } /*for*/
@@ -241,7 +272,7 @@ public class Main extends android.app.Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         SatsListView = (android.widget.ListView)findViewById(R.id.sats_list);
-        SatsList = new android.widget.ArrayAdapter<String>
+        SatsList = new android.widget.ArrayAdapter<SatItem>
           (
             this,
             R.layout.satellite_listitem
@@ -249,6 +280,28 @@ public class Main extends android.app.Activity
         SatsListView.setAdapter(SatsList);
         Message = (android.widget.TextView)findViewById(R.id.message);
         Graphical = (VectorView)findViewById(R.id.vector_view);
+        SatsListView.setOnItemClickListener
+          (
+            new android.widget.AdapterView.OnItemClickListener()
+              {
+
+                public void onItemClick
+                  (
+                    android.widget.AdapterView<?> parent,
+                    android.view.View view,
+                    int position,
+                    long id
+                  )
+                  {
+                    if (position >= 0 && position < SatsList.getCount())
+                      {
+                      /* flash the part of the graphic representing the selected satellite */
+                        Graphical.FlashSat(((SatItem)SatsList.getItem(position)).Prn);
+                      } /*if*/
+                  } /*OnItemSelected*/
+
+              }
+          );
         Locator = (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
         if (Locator != null)
           {
