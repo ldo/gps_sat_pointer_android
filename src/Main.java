@@ -1,7 +1,9 @@
+package nz.gen.geek_central.GPSTest;
 /*
     Try to get info from GPS
 */
-package nz.gen.geek_central.GPSTest;
+
+import android.hardware.SensorManager;
 
 public class Main extends android.app.Activity
   {
@@ -9,7 +11,12 @@ public class Main extends android.app.Activity
     android.widget.ListView SatsListView;
     android.widget.ArrayAdapter<String> SatsList;
     android.widget.TextView Message;
-    android.location.LocationListener LetMeKnow;
+    VectorView Graphical;
+
+    android.hardware.SensorManager SensorMan;
+    android.hardware.Sensor OrientationSensor;
+    android.location.LocationListener LocationChanged;
+    android.hardware.SensorEventListener OrientationChanged;
     StatusGetter PosUpdates;
     android.location.GpsStatus LastGPS;
     int LastStatus = -1;
@@ -67,6 +74,7 @@ public class Main extends android.app.Activity
                       } /*for*/
                     Msg.printf("Sats used/found: %d/%d\n", UsedSats, GotSats);
                     SatsList.notifyDataSetChanged();
+                    Graphical.SetSats(LastGPS.getSatellites());
                   } /*if*/
                 if (GPSLast != null)
                   {
@@ -155,6 +163,28 @@ public class Main extends android.app.Activity
 
       } /*StatusGetter*/
 
+    class Orienter implements android.hardware.SensorEventListener
+      {
+
+        public void onAccuracyChanged
+          (
+            android.hardware.Sensor TheSensor,
+            int NewAccuracy
+          )
+          {
+          /* don't care */
+          } /*onAccuracyChanged*/
+
+        public void onSensorChanged
+          (
+            android.hardware.SensorEvent Event
+          )
+          {
+            Graphical.SetOrientation(Event.values);
+          } /*onSensorChanged*/
+
+      } /*Orienter*/
+
     class Navigator implements android.location.LocationListener
       {
         public void onLocationChanged
@@ -210,7 +240,6 @@ public class Main extends android.app.Activity
       {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        Locator = (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
         SatsListView = (android.widget.ListView)findViewById(R.id.sats_list);
         SatsList = new android.widget.ArrayAdapter<String>
           (
@@ -219,6 +248,8 @@ public class Main extends android.app.Activity
           );
         SatsListView.setAdapter(SatsList);
         Message = (android.widget.TextView)findViewById(R.id.message);
+        Graphical = (VectorView)findViewById(R.id.vector_view);
+        Locator = (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
         if (Locator != null)
           {
             for (String ProviderName : Locator.getProviders(false))
@@ -269,8 +300,11 @@ public class Main extends android.app.Activity
           {
             System.err.println("GPSTest: No location service found!");
           } /*if*/
+        SensorMan = ((SensorManager)getSystemService(SENSOR_SERVICE));
+        OrientationSensor = SensorMan.getDefaultSensor(android.hardware.Sensor.TYPE_ORIENTATION);
         UpdateMessage();
-        LetMeKnow = new Navigator();
+        LocationChanged = new Navigator();
+        OrientationChanged = new Orienter();
         PosUpdates = new StatusGetter();
       } /*onCreate*/
 
@@ -279,8 +313,12 @@ public class Main extends android.app.Activity
       {
         super.onPause();
       /* conserve battery: */
+        if (OrientationSensor != null)
+          {
+            SensorMan.unregisterListener(OrientationChanged, OrientationSensor);
+          } /*if*/
         Locator.removeGpsStatusListener(PosUpdates);
-        Locator.removeUpdates(LetMeKnow);
+        Locator.removeUpdates(LocationChanged);
       } /*onPause*/
 
     @Override
@@ -293,8 +331,17 @@ public class Main extends android.app.Activity
             /*provider =*/ android.location.LocationManager.GPS_PROVIDER,
             /*minTime =*/ 10 * 1000,
             /*minDistance =*/ 0,
-            /*listener =*/ LetMeKnow
+            /*listener =*/ LocationChanged
           );
+        if (OrientationSensor != null)
+          {
+            SensorMan.registerListener
+              (
+                OrientationChanged,
+                OrientationSensor,
+                android.hardware.SensorManager.SENSOR_DELAY_UI
+              );
+          } /*if*/
       } /*onResume*/
 
   } /*Main*/
