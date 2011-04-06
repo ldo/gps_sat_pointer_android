@@ -71,7 +71,6 @@
 
     <target name="install" depends="signed">
         <exec executable="${sdk.dir}/platform-tools/adb">
-            <arg value="-d"/>
             <arg value="install"/>
             <arg value="-r"/>
             <arg value="bin/${out.projname}.apk"/>
