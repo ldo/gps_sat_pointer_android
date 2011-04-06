@@ -187,7 +187,7 @@ public class VectorView extends android.view.View
             /*useCenter =*/ false,
             /*paint =*/ GraphicsUseful.FillWithColor(0xff0a6d01)
           );
-        float YPos = 0.0f; /* debug */
+        float YPos = 12.0f; /* debug */
         for (SatInfo ThisSat : Sats)
           {
             Vec3f D; /* satellite direction in phone coordinates */
@@ -214,8 +214,8 @@ public class VectorView extends android.view.View
                   (
                     String.format
                       (
-                        "%d(%d = %s) (%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f)(%.2f, %.2f) = (%.2f, %.2f, %.2f)",
-                        ThisSat.Prn, FlashPrn, ThisSat.Prn == FlashPrn ? "Y" : "N",
+                        "%d (%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f)(%.2f, %.2f) = (%.2f, %.2f, %.2f)",
+                        ThisSat.Prn,
                         - AziSin * ElevCos, - AziCos * ElevCos, ElevSin,
                         OrientVector.x, OrientVector.y, OrientVector.z,
                         OrientAzi, OrientElev,
