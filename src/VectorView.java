@@ -205,7 +205,7 @@ public class VectorView extends android.view.View
                     .xform(
                         new Vec3f
                           (
-                              - AziSin * ElevCos,
+                              AziSin * ElevCos,
                               - AziCos * ElevCos,
                               ElevSin
                           )
@@ -216,7 +216,7 @@ public class VectorView extends android.view.View
                       (
                         "%d (%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f)(%.2f, %.2f) = (%.2f, %.2f, %.2f)",
                         ThisSat.Prn,
-                        - AziSin * ElevCos, - AziCos * ElevCos, ElevSin,
+                        AziSin * ElevCos, - AziCos * ElevCos, ElevSin,
                         OrientVector.x, OrientVector.y, OrientVector.z,
                         OrientAzi, OrientElev,
                         D.x, D.y, D.z
