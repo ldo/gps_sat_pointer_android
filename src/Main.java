@@ -120,18 +120,13 @@ public class Main extends android.app.Activity
                       );
                     Msg.printf
                       (
-                        "Lat %.6f°, Long %.6f°\n",
+                        "Lat %.6f°, Long %.6f°",
                         GPSLast.getLatitude(),
                         GPSLast.getLongitude()
                       );
-                    Msg.print("Accuracy: ");
                     if (GPSLast.hasAccuracy())
                       {
-                        Msg.printf("±%.2fm", GPSLast.getAccuracy());
-                      }
-                    else
-                      {
-                        Msg.print("N/A");
+                        Msg.printf(" ±%.2fm", GPSLast.getAccuracy());
                       } /*if*/
                     Msg.println();
                     Msg.printf
@@ -149,8 +144,7 @@ public class Main extends android.app.Activity
                       {
                         Msg.print("N/A");
                       } /*if*/
-                    Msg.println();
-                    Msg.print("Speed: ");
+                    Msg.print(", Speed: ");
                     if (GPSLast.hasSpeed())
                       {
                         Msg.printf("%.2f", GPSLast.getSpeed());
@@ -159,8 +153,7 @@ public class Main extends android.app.Activity
                       {
                         Msg.print("N/A");
                       } /*if*/
-                    Msg.println();
-                    Msg.print("Bearing: ");
+                    Msg.print(", Bearing: ");
                     if (GPSLast.hasBearing())
                       {
                         Msg.printf("%.2f°", GPSLast.getBearing());
