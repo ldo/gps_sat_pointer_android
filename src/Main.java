@@ -101,6 +101,7 @@ public class Main extends android.app.Activity
     android.widget.ListView SatsListView;
     android.widget.ArrayAdapter<SatItem> SatsList;
     android.widget.TextView Message;
+    android.os.Handler RunBG;
     VectorView Graphical;
 
     android.hardware.SensorManager SensorMan;
@@ -236,6 +237,20 @@ public class Main extends android.app.Activity
               }
           } /*if*/
       } /*UpdateMessage*/
+
+    class Updater implements Runnable
+      {
+        public void run()
+          {
+            UpdateMessage();
+            QueueUpdate();
+          } /*run*/
+      } /*Updater*/
+
+    void QueueUpdate()
+      {
+        RunBG.postDelayed(new Updater(), 60 * 1000);
+      } /*QueueUpdate*/
 
     class StatusGetter implements android.location.GpsStatus.Listener
       {
@@ -412,6 +427,8 @@ public class Main extends android.app.Activity
         SensorMan = ((SensorManager)getSystemService(SENSOR_SERVICE));
         OrientationSensor = SensorMan.getDefaultSensor(android.hardware.Sensor.TYPE_ORIENTATION);
         UpdateMessage();
+        RunBG = new android.os.Handler();
+        QueueUpdate();
         LocationChanged = new Navigator();
         OrientationChanged = new Orienter();
         PosUpdates = new StatusGetter();
