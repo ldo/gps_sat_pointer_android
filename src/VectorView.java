@@ -64,7 +64,8 @@ public class VectorView extends android.view.View
 
     float OrientAzi = 0.0f;
     float OrientElev = 0.0f;
-    Vec3f OrientVector = new Vec3f(0.0f, -1.0f, 0.0f);
+    float OrientRoll = 0.0f;
+    Mat4f OrientMatrix = Mat4f.identity();
     SatInfo[] Sats = {};
     android.os.Handler RunTask;
     int FlashPrn = -1;
@@ -116,17 +117,13 @@ public class VectorView extends android.view.View
         isn't available before Android 2.3, API level 9 */
         OrientAzi = GraphicsUseful.ToRadians(Datum[0]);
         OrientElev = GraphicsUseful.ToRadians(Datum[1]);
-      /* not sure what to make of Datum[2]: value goes up to
-        about ±90° and then decreases again */
-        final float AziCos = FloatMath.cos(OrientAzi);
-        final float AziSin = FloatMath.sin(OrientAzi);
-        final float ElevCos = FloatMath.cos(OrientElev);
-        final float ElevSin = FloatMath.sin(OrientElev);
-        OrientVector = new Vec3f
-            (
-                - AziSin * ElevCos,
-                - AziCos * ElevCos,
-                ElevSin
+        OrientRoll = GraphicsUseful.ToRadians(Datum[2]);
+        OrientMatrix =
+                Mat4f.rotation(Mat4f.AXIS_Z, - OrientAzi)
+            .mul(
+                Mat4f.rotation(Mat4f.AXIS_X, - OrientElev)
+            ).mul(
+                Mat4f.rotation(Mat4f.AXIS_Y, OrientRoll)
             );
         invalidate();
       } /*SetOrientation*/
@@ -197,12 +194,8 @@ public class VectorView extends android.view.View
                 final float ElevCos = FloatMath.cos(ThisSat.Elevation);
                 final float ElevSin = FloatMath.sin(ThisSat.Elevation);
                 D =
-                        Mat4f.rotate_align
-                          (
-                            new Vec3f(0.0f, -1.0f, 0.0f),
-                            OrientVector
-                          )
-                    .xform(
+                    OrientMatrix.xform
+                      (
                         new Vec3f
                           (
                               AziSin * ElevCos,
@@ -214,11 +207,10 @@ public class VectorView extends android.view.View
                   (
                     String.format
                       (
-                        "%d (%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f)(%.2f, %.2f) = (%.2f, %.2f, %.2f)",
+                        "%d (%.2f, %.2f, %.2f) from (%.2f, %.2f, %.2f) = (%.2f, %.2f, %.2f)",
                         ThisSat.Prn,
                         AziSin * ElevCos, - AziCos * ElevCos, ElevSin,
-                        OrientVector.x, OrientVector.y, OrientVector.z,
-                        OrientAzi, OrientElev,
+                        OrientAzi, OrientElev, OrientRoll,
                         D.x, D.y, D.z
                       ),
                     - Radius, YPos - Radius,
