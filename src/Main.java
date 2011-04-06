@@ -152,15 +152,14 @@ public class Main extends android.app.Activity
                               (
                                 String.format
                                   (
-                                    "Sat %d azi %.0f° elev %.0f° prn %d snr %.2fdB almanac %s ephemeris %s used %s",
-                                    GotSats,
+                                    "Prn %d azi %.0f° elev %.0f° snr %.1fdB used=%s",
+                                    ThisSat.getPrn(),
                                     ThisSat.getAzimuth(), /* returned only to nearest degree */
                                     ThisSat.getElevation(), /* returned only to nearest degree */
-                                    ThisSat.getPrn(),
-                                    ThisSat.getSnr(),
-                                    ThisSat.hasAlmanac(),
-                                    ThisSat.hasEphemeris(),
-                                    ThisSat.usedInFix()
+                                    ThisSat.getSnr(), /* only to one decimal place */
+                                  /* ThisSat.hasAlmanac() and ThisSat.hasEphemeris()
+                                    always seem to be true */
+                                    ThisSat.usedInFix() ? "Y" : "N"
                                   ),
                                 ThisSat.getPrn()
                               )

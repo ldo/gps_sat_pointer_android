@@ -14,14 +14,14 @@
         android:layout_width="fill_parent" 
         android:layout_height="150dp"
     />
-    <TextView  
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content" 
-        android:text="See system log for more output"
-    />
     <nz.gen.geek_central.GPSTest.VectorView
         android:id="@+id/vector_view"
         android:layout_width="400dp" 
         android:layout_height="200dp" 
+    />
+    <TextView  
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content" 
+        android:text="See system log for more output"
     />
 </LinearLayout>
