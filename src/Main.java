@@ -5,6 +5,69 @@ package nz.gen.geek_central.GPSTest;
 
 import android.hardware.SensorManager;
 
+class TimeUseful
+  {
+    protected static class AgoStep
+      {
+        public int Divider;
+        public String Singular, Plural;
+
+        public AgoStep
+          (
+            int Divider,
+            String Singular,
+            String Plural
+          )
+          {
+            this.Divider = Divider;
+            this.Singular = Singular;
+            this.Plural = Plural;
+          } /*AgoStep*/
+
+      } /*AgoStep*/
+    protected static AgoStep[] AgoSteps =
+        {
+            new AgoStep(1, "second", "seconds"),
+            new AgoStep(60, "minute", "minutes"),
+            new AgoStep(60, "hour", "hours"),
+            new AgoStep(24, "day", "days"),
+            new AgoStep(7, "week", "weeks"),
+        };
+
+    public static String Ago
+      (
+        long Then,
+        long Now
+      )
+      /* given two times in milliseconds since the epoch, returns a string
+        saying how long ago Then was compared to Now. */
+      {
+        long interval = (Now - Then) / 1000;
+        AgoStep unit = null; /* won't be left null */
+        for (int unitindex = 0;;)
+          {
+            if (unitindex == AgoSteps.length)
+                break;
+            unit = AgoSteps[unitindex];
+            if (interval < unit.Divider)
+              {
+                unit = AgoSteps[unitindex - 1];
+                break;
+              } /*if*/
+            interval /= unit.Divider;
+            ++unitindex;
+          } /*for*/
+        return
+            String.format
+              (
+                "%d %s ago",
+                interval,
+                interval != 1 ? unit.Plural : unit.Singular
+              );
+      } /*Ago*/
+
+  } /*TimeUseful*/
+
 public class Main extends android.app.Activity
   {
     class SatItem
@@ -111,12 +174,13 @@ public class Main extends android.app.Activity
                   {
                     Msg.printf
                       (
-                        "Last GPS fix at %s\n",
+                        "Last fix at %s (%s)\n",
                         android.text.format.DateFormat.format
                           (
                             "kk:mm:ss E, dd/MMM/yyyy",
                             GPSLast.getTime()
-                          )
+                          ),
+                        TimeUseful.Ago(GPSLast.getTime(), System.currentTimeMillis())
                       );
                     Msg.printf
                       (
