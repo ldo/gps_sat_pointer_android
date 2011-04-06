@@ -174,7 +174,7 @@ public class VectorView extends android.view.View
       {
         super.onDraw(Draw);
         Draw.save();
-        final float Radius = 100.0f;
+        final float Radius = (float)Math.min(getWidth(), getHeight()) / 2.0f;
         Draw.translate(Radius, Radius);
         Draw.drawArc /* background */
           (

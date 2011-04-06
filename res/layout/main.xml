@@ -16,8 +16,8 @@
     />
     <nz.gen.geek_central.GPSTest.VectorView
         android:id="@+id/vector_view"
-        android:layout_width="200dp" 
-        android:layout_height="200dp" 
+        android:layout_width="220dp" 
+        android:layout_height="220dp" 
     />
     <TextView  
         android:layout_width="fill_parent" 
