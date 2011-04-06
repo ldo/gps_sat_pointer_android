@@ -56,16 +56,25 @@
     <target name="signed" depends="release">
         <signjar
             keystore="${keystore.path}" alias="${keystore.alias}" storepass="${keystore.password}"
-            jar="bin/GPSTest-unsigned.apk"
-            signedjar="bin/GPSTest-unaligned.apk"
+            jar="bin/${out.projname}-unsigned.apk"
+            signedjar="bin/${out.projname}-unaligned.apk"
             verbose="true"
         />
         <exec executable="${sdk.dir}/tools/zipalign">
             <arg value="-f"/>
             <arg value="-v"/>
             <arg value="4"/>
-            <arg value="bin/GPSTest-unaligned.apk"/>
-            <arg value="bin/GPSTest.apk"/>
+            <arg value="bin/${out.projname}-unaligned.apk"/>
+            <arg value="bin/${out.projname}.apk"/>
+        </exec>
+    </target>
+
+    <target name="install" depends="signed">
+        <exec executable="${sdk.dir}/platform-tools/adb">
+            <arg value="-d"/>
+            <arg value="install"/>
+            <arg value="-r"/>
+            <arg value="bin/${out.projname}.apk"/>
         </exec>
     </target>
 
