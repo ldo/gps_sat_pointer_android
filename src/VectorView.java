@@ -34,6 +34,7 @@ class GraphicsUseful
         final android.graphics.Paint ThePaint = new android.graphics.Paint();
         ThePaint.setStyle(android.graphics.Paint.Style.FILL);
         ThePaint.setColor(TheColor);
+        ThePaint.setAntiAlias(true);
         return
             ThePaint;
       } /*FillWithColor*/
