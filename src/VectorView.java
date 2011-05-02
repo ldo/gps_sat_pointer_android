@@ -204,11 +204,12 @@ public class VectorView extends android.view.View
                   );
               }
             final android.graphics.Path V = new android.graphics.Path();
-            final float BaseWidth = 5.0f;
-            final float EndWidth = BaseWidth * (1.0f + D.z);
+            final float Widen = 1.0f + D.z;
               /* taper to simulate perspective foreshortening */
+            final float BaseWidth = 5.0f;
+            final float EndWidth = BaseWidth * Widen;
             final float ArrowLength = 10.0f;
-            final float ArrowWidthExtra = 5.0f;
+            final float ArrowWidthExtra = 5.0f * Widen;
             V.moveTo(0.0f, 0.0f);
             V.lineTo(+ BaseWidth, 0);
             V.lineTo(+ EndWidth, + Radius - ArrowLength);
@@ -219,7 +220,8 @@ public class VectorView extends android.view.View
             V.lineTo(- BaseWidth, 0);
             V.close();
             final android.graphics.Matrix Orient = new android.graphics.Matrix();
-            Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y)); /* foreshorten lines */
+            Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y));
+              /* perspective foreshortening factor */
             Orient.postRotate(GraphicsUseful.ToDegrees((float)Math.atan2(- D.x, D.y)));
             V.transform(Orient);
             Draw.drawPath
