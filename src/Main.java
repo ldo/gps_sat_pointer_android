@@ -51,7 +51,7 @@ class TimeUseful
             unit = AgoSteps[unitindex];
             if (interval < unit.Divider)
               {
-                unit = AgoSteps[unitindex - 1];
+                unit = AgoSteps[Math.max(unitindex - 1, 0)];
                 break;
               } /*if*/
             interval /= unit.Divider;
