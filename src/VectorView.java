@@ -193,35 +193,30 @@ public class VectorView extends android.view.View
                 final float AziSin = FloatMath.sin(ThisSat.Azimuth);
                 final float ElevCos = FloatMath.cos(ThisSat.Elevation);
                 final float ElevSin = FloatMath.sin(ThisSat.Elevation);
-                D =
-                    OrientMatrix.xform
+                D = OrientMatrix.xform
+                  (
+                    new Vec3f
                       (
-                        new Vec3f
-                          (
-                              AziSin * ElevCos,
-                              - AziCos * ElevCos,
-                              ElevSin
-                          )
-                      );
+                          AziSin * ElevCos,
+                          - AziCos * ElevCos,
+                          ElevSin
+                      )
+                  );
               }
             final android.graphics.Path V = new android.graphics.Path();
             final float BaseWidth = 5.0f;
             final float EndWidth = BaseWidth * (1.0f + D.z);
               /* taper to simulate perspective foreshortening */
             V.moveTo(0.0f, 0.0f);
-            V.lineTo(+ BaseWidth * D.y, - BaseWidth * D.x);
-            V.lineTo
-              (
-                + EndWidth * D.y + Radius * D.x,
-                - EndWidth * D.x + Radius * D.y
-              );
-            V.lineTo
-              (
-                - EndWidth * D.y + Radius * D.x,
-                + EndWidth * D.x + Radius * D.y
-              );
-            V.lineTo(- BaseWidth * D.y, + BaseWidth * D.x);
+            V.lineTo(+ BaseWidth, 0);
+            V.lineTo(+ EndWidth, + Radius);
+            V.lineTo(- EndWidth, + Radius);
+            V.lineTo(- BaseWidth, 0);
             V.close();
+            final android.graphics.Matrix Orient = new android.graphics.Matrix();
+            Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y)); /* foreshorten lines */
+            Orient.postRotate(GraphicsUseful.ToDegrees((float)Math.atan2(- D.x, D.y)));
+            V.transform(Orient);
             Draw.drawPath
               (
                 V,
@@ -238,4 +233,3 @@ public class VectorView extends android.view.View
       } /*onDraw*/
 
   } /*VectorView*/
-
