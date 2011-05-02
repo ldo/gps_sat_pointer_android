@@ -207,10 +207,15 @@ public class VectorView extends android.view.View
             final float BaseWidth = 5.0f;
             final float EndWidth = BaseWidth * (1.0f + D.z);
               /* taper to simulate perspective foreshortening */
+            final float ArrowLength = 10.0f;
+            final float ArrowWidthExtra = 5.0f;
             V.moveTo(0.0f, 0.0f);
             V.lineTo(+ BaseWidth, 0);
-            V.lineTo(+ EndWidth, + Radius);
-            V.lineTo(- EndWidth, + Radius);
+            V.lineTo(+ EndWidth, + Radius - ArrowLength);
+            V.lineTo(+ EndWidth + ArrowWidthExtra, + Radius - ArrowLength);
+            V.lineTo(0, + Radius);
+            V.lineTo(- EndWidth - ArrowWidthExtra, + Radius - ArrowLength);
+            V.lineTo(- EndWidth, + Radius - ArrowLength);
             V.lineTo(- BaseWidth, 0);
             V.close();
             final android.graphics.Matrix Orient = new android.graphics.Matrix();
