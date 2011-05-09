@@ -167,6 +167,56 @@ public class VectorView extends android.view.View
         invalidate();
       } /*FlashSat*/
 
+    android.graphics.Path PointTo
+      (
+        float Azimuth,
+        float Elevation,
+        float Radius
+      )
+      /* returns an arrow path pointing in the specified absolute
+        direction adjusted for phone coordinates. */
+      {
+        Vec3f D; /* direction in phone coordinates */
+          {
+            final float AziCos = FloatMath.cos(Azimuth);
+            final float AziSin = FloatMath.sin(Azimuth);
+            final float ElevCos = FloatMath.cos(Elevation);
+            final float ElevSin = FloatMath.sin(Elevation);
+            D = OrientMatrix.xform
+              (
+                new Vec3f
+                  (
+                      AziSin * ElevCos,
+                      - AziCos * ElevCos,
+                      ElevSin
+                  )
+              );
+          }
+        final android.graphics.Path V = new android.graphics.Path();
+        final float Widen = 1.0f + D.z;
+          /* taper to simulate perspective foreshortening */
+        final float BaseWidth = 5.0f;
+        final float EndWidth = BaseWidth * Widen;
+        final float ArrowLength = 10.0f;
+        final float ArrowWidthExtra = 5.0f * Widen;
+        V.moveTo(0.0f, 0.0f);
+        V.lineTo(+ BaseWidth, 0);
+        V.lineTo(+ EndWidth, + Radius - ArrowLength);
+        V.lineTo(+ EndWidth + ArrowWidthExtra, + Radius - ArrowLength);
+        V.lineTo(0, + Radius);
+        V.lineTo(- EndWidth - ArrowWidthExtra, + Radius - ArrowLength);
+        V.lineTo(- EndWidth, + Radius - ArrowLength);
+        V.lineTo(- BaseWidth, 0);
+        V.close();
+        final android.graphics.Matrix Orient = new android.graphics.Matrix();
+        Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y));
+          /* perspective foreshortening factor */
+        Orient.postRotate(GraphicsUseful.ToDegrees((float)Math.atan2(- D.x, D.y)));
+        V.transform(Orient);
+        return
+            V;
+      } /*PointTo*/
+
     @Override
     protected void onDraw
       (
@@ -185,48 +235,16 @@ public class VectorView extends android.view.View
             /*useCenter =*/ false,
             /*paint =*/ GraphicsUseful.FillWithColor(0xff0a6d01)
           );
+        Draw.drawPath /* show direction of north */
+          (
+            PointTo(0.0f, 0.0f, Radius),
+            GraphicsUseful.FillWithColor(0xff48c1af)
+          );
         for (SatInfo ThisSat : Sats)
           {
-            Vec3f D; /* satellite direction in phone coordinates */
-              {
-                final float AziCos = FloatMath.cos(ThisSat.Azimuth);
-                final float AziSin = FloatMath.sin(ThisSat.Azimuth);
-                final float ElevCos = FloatMath.cos(ThisSat.Elevation);
-                final float ElevSin = FloatMath.sin(ThisSat.Elevation);
-                D = OrientMatrix.xform
-                  (
-                    new Vec3f
-                      (
-                          AziSin * ElevCos,
-                          - AziCos * ElevCos,
-                          ElevSin
-                      )
-                  );
-              }
-            final android.graphics.Path V = new android.graphics.Path();
-            final float Widen = 1.0f + D.z;
-              /* taper to simulate perspective foreshortening */
-            final float BaseWidth = 5.0f;
-            final float EndWidth = BaseWidth * Widen;
-            final float ArrowLength = 10.0f;
-            final float ArrowWidthExtra = 5.0f * Widen;
-            V.moveTo(0.0f, 0.0f);
-            V.lineTo(+ BaseWidth, 0);
-            V.lineTo(+ EndWidth, + Radius - ArrowLength);
-            V.lineTo(+ EndWidth + ArrowWidthExtra, + Radius - ArrowLength);
-            V.lineTo(0, + Radius);
-            V.lineTo(- EndWidth - ArrowWidthExtra, + Radius - ArrowLength);
-            V.lineTo(- EndWidth, + Radius - ArrowLength);
-            V.lineTo(- BaseWidth, 0);
-            V.close();
-            final android.graphics.Matrix Orient = new android.graphics.Matrix();
-            Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y));
-              /* perspective foreshortening factor */
-            Orient.postRotate(GraphicsUseful.ToDegrees((float)Math.atan2(- D.x, D.y)));
-            V.transform(Orient);
             Draw.drawPath
               (
-                V,
+                PointTo(ThisSat.Azimuth, ThisSat.Elevation, Radius),
                 GraphicsUseful.FillWithColor
                   (
                     ThisSat.Prn == FlashPrn ?
