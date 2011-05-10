@@ -171,7 +171,9 @@ public class VectorView extends android.view.View
       (
         float Azimuth,
         float Elevation,
-        float Radius
+        float Radius,
+        boolean DoubleLength
+          /* true to extend past other side of origin, false to start from origin */
       )
       /* returns an arrow path pointing in the specified absolute
         direction adjusted for phone coordinates. */
@@ -199,14 +201,29 @@ public class VectorView extends android.view.View
         final float EndWidth = BaseWidth * Widen;
         final float ArrowLength = 10.0f;
         final float ArrowWidthExtra = 5.0f * Widen;
-        V.moveTo(0.0f, 0.0f);
-        V.lineTo(+ BaseWidth, 0);
+        if (DoubleLength)
+          {
+            V.moveTo(0, - Radius);
+            V.lineTo(+ BaseWidth * (1.0f - D.z), - Radius);
+          }
+        else
+          {
+            V.moveTo(0, 0);
+            V.lineTo(+ BaseWidth, 0);
+          } /*if*/
         V.lineTo(+ EndWidth, + Radius - ArrowLength);
         V.lineTo(+ EndWidth + ArrowWidthExtra, + Radius - ArrowLength);
         V.lineTo(0, + Radius);
         V.lineTo(- EndWidth - ArrowWidthExtra, + Radius - ArrowLength);
         V.lineTo(- EndWidth, + Radius - ArrowLength);
-        V.lineTo(- BaseWidth, 0);
+        if (DoubleLength)
+          {
+            V.lineTo(- BaseWidth * (1.0f - D.z), - Radius);
+          }
+        else
+          {
+            V.lineTo(- BaseWidth, 0);
+          } /*if*/
         V.close();
         final android.graphics.Matrix Orient = new android.graphics.Matrix();
         Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y));
@@ -237,14 +254,14 @@ public class VectorView extends android.view.View
           );
         Draw.drawPath /* show direction of north */
           (
-            PointTo(0.0f, 0.0f, Radius),
+            PointTo(0.0f, 0.0f, Radius, true),
             GraphicsUseful.FillWithColor(0xff48c1af)
           );
         for (SatInfo ThisSat : Sats)
           {
             Draw.drawPath
               (
-                PointTo(ThisSat.Azimuth, ThisSat.Elevation, Radius),
+                PointTo(ThisSat.Azimuth, ThisSat.Elevation, Radius, false),
                 GraphicsUseful.FillWithColor
                   (
                     ThisSat.Prn == FlashPrn ?
