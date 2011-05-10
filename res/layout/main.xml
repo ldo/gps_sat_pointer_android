@@ -12,7 +12,7 @@
     <ListView
         android:id="@+id/sats_list"
         android:layout_width="fill_parent" 
-        android:layout_height="150dp"
+        android:layout_height="130dp"
     />
     <nz.gen.geek_central.GPSTest.VectorView
         android:id="@+id/vector_view"
