@@ -3,6 +3,9 @@ package nz.gen.geek_central.GPSTest;
     Try to get info from GPS
 */
 
+import android.location.Location;
+import android.location.LocationManager;
+import android.hardware.Sensor;
 import android.hardware.SensorManager;
 
 class TimeUseful
@@ -97,15 +100,15 @@ public class Main extends android.app.Activity
 
       } /*SatItem*/
 
-    android.location.LocationManager Locator;
+    LocationManager Locator;
     android.widget.ListView SatsListView;
     android.widget.ArrayAdapter<SatItem> SatsList;
     android.widget.TextView Message;
     android.os.Handler RunBG;
     VectorView Graphical;
 
-    android.hardware.SensorManager SensorMan;
-    android.hardware.Sensor OrientationSensor;
+    SensorManager SensorMan;
+    Sensor OrientationSensor;
     android.location.LocationListener LocationChanged;
     android.hardware.SensorEventListener OrientationChanged;
     StatusGetter PosUpdates;
@@ -125,15 +128,15 @@ public class Main extends android.app.Activity
                 GPS.getTimeToFirstFix()
               );
               {
-                final android.location.Location GPSLast =
-                    Locator.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER);
+                final Location GPSLast =
+                    Locator.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 final java.io.ByteArrayOutputStream MessageBuf =
                     new java.io.ByteArrayOutputStream();
                 final java.io.PrintStream Msg = new java.io.PrintStream(MessageBuf);
                 Msg.printf
                   (
                     "GPS enabled: %s.\n",
-                    Locator.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
+                    Locator.isProviderEnabled(LocationManager.GPS_PROVIDER)
                   );
                 if (LastGPS != null)
                   {
@@ -270,7 +273,7 @@ public class Main extends android.app.Activity
 
         public void onAccuracyChanged
           (
-            android.hardware.Sensor TheSensor,
+            Sensor TheSensor,
             int NewAccuracy
           )
           {
@@ -291,7 +294,7 @@ public class Main extends android.app.Activity
       {
         public void onLocationChanged
           (
-            android.location.Location NewLocation
+            Location NewLocation
           )
           {
             UpdateMessage();
@@ -373,7 +376,7 @@ public class Main extends android.app.Activity
 
               }
           );
-        Locator = (android.location.LocationManager)getSystemService(LOCATION_SERVICE);
+        Locator = (LocationManager)getSystemService(LOCATION_SERVICE);
         if (Locator != null)
           {
             for (String ProviderName : Locator.getProviders(false))
@@ -402,8 +405,7 @@ public class Main extends android.app.Activity
                     ThisProvider.supportsBearing(),
                     ThisProvider.supportsSpeed()
                   );
-                final android.location.Location LastKnown =
-                    Locator.getLastKnownLocation(ProviderName);
+                final Location LastKnown = Locator.getLastKnownLocation(ProviderName);
                 if (LastKnown != null)
                   {
                     final StringBuilder Dump = new StringBuilder();
@@ -425,7 +427,7 @@ public class Main extends android.app.Activity
             System.err.println("GPSTest: No location service found!");
           } /*if*/
         SensorMan = ((SensorManager)getSystemService(SENSOR_SERVICE));
-        OrientationSensor = SensorMan.getDefaultSensor(android.hardware.Sensor.TYPE_ORIENTATION);
+        OrientationSensor = SensorMan.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         UpdateMessage();
         RunBG = new android.os.Handler();
         QueueUpdate();
@@ -454,7 +456,7 @@ public class Main extends android.app.Activity
         Locator.addGpsStatusListener(PosUpdates);
         Locator.requestLocationUpdates
           (
-            /*provider =*/ android.location.LocationManager.GPS_PROVIDER,
+            /*provider =*/ LocationManager.GPS_PROVIDER,
             /*minTime =*/ 10 * 1000,
             /*minDistance =*/ 0,
             /*listener =*/ LocationChanged
@@ -465,7 +467,7 @@ public class Main extends android.app.Activity
               (
                 OrientationChanged,
                 OrientationSensor,
-                android.hardware.SensorManager.SENSOR_DELAY_UI
+                SensorManager.SENSOR_DELAY_UI
               );
           } /*if*/
       } /*onResume*/
