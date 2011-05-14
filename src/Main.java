@@ -115,6 +115,7 @@ public class Main extends android.app.Activity
     android.location.GpsStatus LastGPS;
     int LastStatus = -1;
     int NrSatellites = -1;
+    long TimeDiscrepancy = 0;
 
     void UpdateMessage()
       {
@@ -138,6 +139,17 @@ public class Main extends android.app.Activity
                     "GPS enabled: %s.\n",
                     Locator.isProviderEnabled(LocationManager.GPS_PROVIDER)
                   );
+                if (TimeDiscrepancy != 0)
+                  {
+                  /* pity I can't correct the clock, but SET_TIME permission is
+                    only available to "system" apps */
+                    Msg.printf
+                      (
+                        "System time is %s by %d ms\n",
+                        TimeDiscrepancy > 0 ? "ahead" : "behind",
+                        Math.abs(TimeDiscrepancy)
+                      );
+                  } /*if*/
                 if (LastGPS != null)
                   {
                     int GotSats = 0;
@@ -183,7 +195,11 @@ public class Main extends android.app.Activity
                             "kk:mm:ss E, dd/MMM/yyyy",
                             GPSLast.getTime()
                           ),
-                        TimeUseful.Ago(GPSLast.getTime(), System.currentTimeMillis())
+                        TimeUseful.Ago
+                          (
+                            GPSLast.getTime(),
+                            System.currentTimeMillis() - TimeDiscrepancy
+                          )
                       );
                     Msg.printf
                       (
@@ -297,6 +313,7 @@ public class Main extends android.app.Activity
             Location NewLocation
           )
           {
+            TimeDiscrepancy = System.currentTimeMillis() - NewLocation.getTime();
             UpdateMessage();
           } /*onLocationChanged*/
 
