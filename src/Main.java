@@ -268,7 +268,7 @@ public class Main extends android.app.Activity
 
     void QueueUpdate()
       {
-        RunBG.postDelayed(new Updater(), 60 * 1000);
+        RunBG.postDelayed(new Updater(), 5000);
       } /*QueueUpdate*/
 
     class StatusGetter implements android.location.GpsStatus.Listener
