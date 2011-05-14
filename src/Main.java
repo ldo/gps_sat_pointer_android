@@ -115,7 +115,10 @@ public class Main extends android.app.Activity
     android.location.GpsStatus LastGPS;
     int LastStatus = -1;
     int NrSatellites = -1;
+    long LastUpdate = 0;
     long TimeDiscrepancy = 0;
+    static final long TrustInterval = 3600 * 1000;
+      /* how long to use a GPS fix to display correction to system time */
 
     void UpdateMessage()
       {
@@ -145,11 +148,26 @@ public class Main extends android.app.Activity
                     only available to "system" apps */
                     Msg.printf
                       (
-                        "System time is %s by %d ms\n",
+                        "System time is %s by %dms\n",
                         TimeDiscrepancy > 0 ? "ahead" : "behind",
                         Math.abs(TimeDiscrepancy)
                       );
                   } /*if*/
+                  {
+                    final long Now = System.currentTimeMillis();
+                    if (Now - LastUpdate <= TrustInterval)
+                      {
+                        Msg.printf
+                          (
+                            "Current GPS time is %s\n",
+                            android.text.format.DateFormat.format
+                              (
+                                "kk:mm:ss E, dd/MMM/yyyy",
+                                Now - TimeDiscrepancy
+                              )
+                          );
+                      } /*if*/
+                  }
                 if (LastGPS != null)
                   {
                     int GotSats = 0;
@@ -268,7 +286,14 @@ public class Main extends android.app.Activity
 
     void QueueUpdate()
       {
-        RunBG.postDelayed(new Updater(), 5000);
+        RunBG.postDelayed
+          (
+            new Updater(),
+            System.currentTimeMillis() - LastUpdate <= TrustInterval ?
+                1000
+            :
+                5000
+          );
       } /*QueueUpdate*/
 
     class StatusGetter implements android.location.GpsStatus.Listener
@@ -313,7 +338,8 @@ public class Main extends android.app.Activity
             Location NewLocation
           )
           {
-            TimeDiscrepancy = System.currentTimeMillis() - NewLocation.getTime();
+            LastUpdate = System.currentTimeMillis();
+            TimeDiscrepancy = LastUpdate - NewLocation.getTime();
             UpdateMessage();
           } /*onLocationChanged*/
 
