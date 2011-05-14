@@ -162,7 +162,7 @@ public class Main extends android.app.Activity
                             "Current GPS time is %s\n",
                             android.text.format.DateFormat.format
                               (
-                                "kk:mm:ss E, dd/MMM/yyyy",
+                                "kk:mm:ss E, dd/MMM/yyyy z",
                                 Now - TimeDiscrepancy
                               )
                           );
@@ -210,7 +210,7 @@ public class Main extends android.app.Activity
                         "Last fix at %s (%s)\n",
                         android.text.format.DateFormat.format
                           (
-                            "kk:mm:ss E, dd/MMM/yyyy",
+                            "kk:mm:ss E, dd/MMM/yyyy z",
                             GPSLast.getTime()
                           ),
                         TimeUseful.Ago
