@@ -248,7 +248,7 @@ public class Main extends android.app.Activity
                     Msg.print(", Speed: ");
                     if (GPSLast.hasSpeed())
                       {
-                        Msg.printf("%.2f", GPSLast.getSpeed());
+                        Msg.printf("%.2fm/s", GPSLast.getSpeed());
                       }
                     else
                       {
