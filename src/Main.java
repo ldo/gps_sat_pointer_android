@@ -115,8 +115,6 @@ public class Main extends android.app.Activity
     android.location.GpsStatus LastGPS;
     int LastStatus = -1;
     int NrSatellites = -1;
-    long LastUpdate = 0;
-    long TimeDiscrepancy = 0;
     static final long TrustInterval = 3600 * 1000;
       /* how long to use a GPS fix to display correction to system time */
 
@@ -142,20 +140,32 @@ public class Main extends android.app.Activity
                     "GPS enabled: %s.\n",
                     Locator.isProviderEnabled(LocationManager.GPS_PROVIDER)
                   );
-                if (TimeDiscrepancy != 0)
+                if (Global.GotTimeDiscrepancy)
                   {
                   /* pity I can't correct the clock, but SET_TIME permission is
                     only available to "system" apps */
-                    Msg.printf
-                      (
-                        "System time is %s by %dms\n",
-                        TimeDiscrepancy > 0 ? "ahead" : "behind",
-                        Math.abs(TimeDiscrepancy)
-                      );
+                    if (Global.TimeDiscrepancy != 0)
+                      {
+                        Msg.printf
+                          (
+                            "System time is %s by %dms\n",
+                            Global.TimeDiscrepancy > 0 ? "ahead" : "behind",
+                            Math.abs(Global.TimeDiscrepancy)
+                          );
+                      }
+                    else
+                      {
+                        Msg.println("System time is correct to the millisecond!"); /* yeah, right */
+                      } /*if*/
                   } /*if*/
                   {
                     final long Now = System.currentTimeMillis();
-                    if (Now - LastUpdate <= TrustInterval)
+                    if
+                      (
+                            Global.GotTimeDiscrepancy
+                        &&
+                            Now - Global.LastLocationUpdate <= TrustInterval
+                      )
                       {
                         Msg.printf
                           (
@@ -163,7 +173,7 @@ public class Main extends android.app.Activity
                             android.text.format.DateFormat.format
                               (
                                 "kk:mm:ss E, dd/MMM/yyyy z",
-                                Now - TimeDiscrepancy
+                                Now - Global.TimeDiscrepancy
                               )
                           );
                       } /*if*/
@@ -216,7 +226,7 @@ public class Main extends android.app.Activity
                         TimeUseful.Ago
                           (
                             GPSLast.getTime(),
-                            System.currentTimeMillis() - TimeDiscrepancy
+                            System.currentTimeMillis() - Global.TimeDiscrepancy
                           )
                       );
                     Msg.printf
@@ -289,7 +299,7 @@ public class Main extends android.app.Activity
         RunBG.postDelayed
           (
             new Updater(),
-            System.currentTimeMillis() - LastUpdate <= TrustInterval ?
+            System.currentTimeMillis() - Global.LastLocationUpdate <= TrustInterval ?
                 1000
             :
                 5000
@@ -338,8 +348,10 @@ public class Main extends android.app.Activity
             Location NewLocation
           )
           {
-            LastUpdate = System.currentTimeMillis();
-            TimeDiscrepancy = LastUpdate - NewLocation.getTime();
+            Global.LastLocationUpdate = System.currentTimeMillis();
+            Global.LastLocationTime = NewLocation.getTime();
+            Global.TimeDiscrepancy = Global.LastLocationUpdate - Global.LastLocationTime;
+            Global.GotTimeDiscrepancy = true;
             UpdateMessage();
           } /*onLocationChanged*/
 
