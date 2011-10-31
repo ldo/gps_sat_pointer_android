@@ -17,15 +17,22 @@ public class GetTimeOffset extends android.content.BroadcastReceiver
       /* don't bother checking received Intent, because I only perform one action anyway */
       /* unfortunately BroadcastReceiver.PendingResult and goAsync are only available
         in API level 11 or later */
-        if (Global.GotTimeDiscrepancy)
+        if (isOrderedBroadcast())
           {
-            final android.os.Bundle Result = getResultExtras(true);
-            Result.putDouble("offset_from_gps", Global.TimeDiscrepancy / 1000.0);
-            setResultCode(android.app.Activity.RESULT_OK);
+            if (Global.GotTimeDiscrepancy)
+              {
+                final android.os.Bundle Result = getResultExtras(true);
+                Result.putDouble("offset_from_gps", Global.TimeDiscrepancy / 1000.0);
+                setResultCode(android.app.Activity.RESULT_OK);
+              }
+            else
+              {
+                setResultCode(android.app.Activity.RESULT_FIRST_USER);
+              } /*if*/
           }
         else
           {
-            setResultCode(android.app.Activity.RESULT_FIRST_USER);
+            System.err.println("GetTimeOffset received unordered broadcast! Ignoring"); /* debug */
           } /*if*/
       } /*onReceive*/
 
