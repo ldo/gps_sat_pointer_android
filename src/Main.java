@@ -118,6 +118,8 @@ public class Main extends android.app.Activity
     static final long TrustInterval = 3600 * 1000;
       /* how long to use a GPS fix to display correction to system time */
 
+    GetTimeOffset TimeOffsetResponder;
+
     void UpdateMessage()
       {
         if (Locator != null)
@@ -489,7 +491,22 @@ public class Main extends android.app.Activity
         LocationChanged = new Navigator();
         OrientationChanged = new Orienter();
         PosUpdates = new StatusGetter();
+      /* explicitly register broadcast receiver here rather than in manifest,
+        because it cannot return any meaningful data if app is not running */
+        TimeOffsetResponder = new GetTimeOffset();
+        registerReceiver
+          (
+            /*receiver =*/ TimeOffsetResponder,
+            /*filter =*/ new android.content.IntentFilter("nz.gen.geek_central.gps.GET_TIME_OFFSET")
+          );
       } /*onCreate*/
+
+    @Override
+    public void onDestroy()
+      {
+        unregisterReceiver(TimeOffsetResponder);
+        super.onDestroy();
+      } /*onDestroy*/
 
     @Override
     public void onPause()

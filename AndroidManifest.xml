@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="nz.gen.geek_central.GPSTest"
     android:versionCode="1"
-    android:versionName="15277.1"
+    android:versionName="15278.0"
 >
     <uses-sdk
         android:minSdkVersion="7"
@@ -26,11 +26,6 @@
         <receiver android:name="TimeChanged">
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name="GetTimeOffset">
-            <intent-filter>
-                <action android:name="nz.gen.geek_central.gps.GET_TIME_OFFSET"/>
             </intent-filter>
         </receiver>
     </application>
