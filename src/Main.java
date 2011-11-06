@@ -103,7 +103,7 @@ public class Main extends android.app.Activity
     LocationManager Locator;
     android.widget.ListView SatsListView;
     android.widget.ArrayAdapter<SatItem> SatsList;
-    android.widget.TextView Message;
+    android.widget.TextView Message1, Message2;
     android.os.Handler RunBG;
     VectorView Graphical;
 
@@ -125,12 +125,6 @@ public class Main extends android.app.Activity
         if (Locator != null)
           {
             final android.location.GpsStatus GPS = Locator.getGpsStatus(null);
-            System.err.printf
-              (
-                "GPS status: max sats = %d, time to first fix = %d\n",
-                GPS.getMaxSatellites(),
-                GPS.getTimeToFirstFix()
-              );
               {
                 final Location GPSLast =
                     Locator.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -141,6 +135,12 @@ public class Main extends android.app.Activity
                   (
                     "GPS enabled: %s.\n",
                     Locator.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                  );
+                Msg.printf
+                  (
+                    "GPS status: max sats = %d, time to first fix = %d\n",
+                    GPS.getMaxSatellites(),
+                    GPS.getTimeToFirstFix()
                   );
                 if (Global.GotTimeDiscrepancy)
                   {
@@ -282,7 +282,7 @@ public class Main extends android.app.Activity
                     Msg.println("No last known GPS location.");
                   } /*if*/
                 Msg.flush();
-                Message.setText(MessageBuf.toString());
+                Message1.setText(MessageBuf.toString());
               }
           } /*if*/
       } /*UpdateMessage*/
@@ -409,7 +409,8 @@ public class Main extends android.app.Activity
             R.layout.satellite_listitem
           );
         SatsListView.setAdapter(SatsList);
-        Message = (android.widget.TextView)findViewById(R.id.message);
+        Message1 = (android.widget.TextView)findViewById(R.id.message1);
+        Message2 = (android.widget.TextView)findViewById(R.id.message2);
         Graphical = (VectorView)findViewById(R.id.vector_view);
         SatsListView.setOnItemClickListener
           (
@@ -434,55 +435,61 @@ public class Main extends android.app.Activity
               }
           );
         Locator = (LocationManager)getSystemService(LOCATION_SERVICE);
-        if (Locator != null)
           {
-            for (String ProviderName : Locator.getProviders(false))
+            final java.io.ByteArrayOutputStream MessageBuf =
+                new java.io.ByteArrayOutputStream();
+            final java.io.PrintStream Msg = new java.io.PrintStream(MessageBuf);
+            if (Locator != null)
               {
-                final android.location.LocationProvider ThisProvider =
-                    Locator.getProvider(ProviderName);
-                System.err.printf
-                  (
-                    "Provider %s: accuracy = %d, powerreq = %d, costs = %s\n",
-                    ProviderName,
-                    ThisProvider.getAccuracy(),
-                    ThisProvider.getPowerRequirement(),
-                    ThisProvider.hasMonetaryCost()
-                  );
-                System.err.printf
-                  (
-                    " req cell = %s, req net = %s, req sat = %s\n",
-                    ThisProvider.requiresCell(),
-                    ThisProvider.requiresNetwork(),
-                    ThisProvider.requiresSatellite()
-                  );
-                System.err.printf
-                  (
-                    " does altitude = %s, does bearing = %s, does speed = %s\n",
-                    ThisProvider.supportsAltitude(),
-                    ThisProvider.supportsBearing(),
-                    ThisProvider.supportsSpeed()
-                  );
-                final Location LastKnown = Locator.getLastKnownLocation(ProviderName);
-                if (LastKnown != null)
+                for (String ProviderName : Locator.getProviders(false))
                   {
-                    final StringBuilder Dump = new StringBuilder();
-                    LastKnown.dump(new android.util.StringBuilderPrinter(Dump), "\n  loc:");
-                    System.err.printf
+                    final android.location.LocationProvider ThisProvider =
+                        Locator.getProvider(ProviderName);
+                    Msg.printf
                       (
-                        " last known location: %s\n",
-                        Dump.toString()
+                        "Provider %s: accuracy = %d, powerreq = %d, costs = %s\n",
+                        ProviderName,
+                        ThisProvider.getAccuracy(),
+                        ThisProvider.getPowerRequirement(),
+                        ThisProvider.hasMonetaryCost()
                       );
-                  }
-                else
-                  {
-                    System.err.println(" no last known location");
-                  } /*if*/
-              } /*for*/
+                    Msg.printf
+                      (
+                        " req cell = %s, req net = %s, req sat = %s\n",
+                        ThisProvider.requiresCell(),
+                        ThisProvider.requiresNetwork(),
+                        ThisProvider.requiresSatellite()
+                      );
+                    Msg.printf
+                      (
+                        " does altitude = %s, does bearing = %s, does speed = %s\n",
+                        ThisProvider.supportsAltitude(),
+                        ThisProvider.supportsBearing(),
+                        ThisProvider.supportsSpeed()
+                      );
+                    final Location LastKnown = Locator.getLastKnownLocation(ProviderName);
+                    if (LastKnown != null)
+                      {
+                        final StringBuilder Dump = new StringBuilder();
+                        LastKnown.dump(new android.util.StringBuilderPrinter(Dump), "\n  loc:");
+                        Msg.printf
+                          (
+                            " last known location: %s\n",
+                            Dump.toString()
+                          );
+                      }
+                    else
+                      {
+                        Msg.println(" no last known location");
+                      } /*if*/
+                  } /*for*/
+              }
+            else
+              {
+                Msg.println("GPSTest: No location service found!");
+              } /*if*/
+            Message2.setText(MessageBuf.toString());
           }
-        else
-          {
-            System.err.println("GPSTest: No location service found!");
-          } /*if*/
         SensorMan = ((SensorManager)getSystemService(SENSOR_SERVICE));
         OrientationSensor = SensorMan.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         UpdateMessage();

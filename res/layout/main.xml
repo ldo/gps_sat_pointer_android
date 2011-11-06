@@ -30,24 +30,29 @@
             android:layout_height="30dp"
             android:background="@drawable/slide_handle"
         />
-        <LinearLayout
+        <ScrollView
             android:id="@id/slide_content"
-            android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/slide_frame"
             android:padding="6dp"
         >
-            <TextView
-                android:id="@+id/message"
+            <LinearLayout
+                android:orientation="vertical"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-            />
-            <TextView
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="See system log for more output"
-            />
-        </LinearLayout>
+            >
+                <TextView
+                    android:id="@+id/message1"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                />
+                <TextView
+                    android:id="@+id/message2"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                />
+            </LinearLayout>
+        </ScrollView>
     </SlidingDrawer>
 </RelativeLayout>
