@@ -1,27 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
 >
-    <TextView
-        android:id="@+id/message"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-    />
     <ListView
         android:id="@+id/sats_list"
         android:layout_width="fill_parent"
         android:layout_height="130dp"
+        android:gravity="top|fill_horizontal"
     />
     <nz.gen.geek_central.GPSTest.VectorView
         android:id="@+id/vector_view"
         android:layout_width="220dp"
         android:layout_height="220dp"
+        android:gravity="fill_horizontal"
+        android:layout_below="@id/sats_list"
     />
-    <TextView
+    <SlidingDrawer
+        android:handle="@+id/slide_handle"
+        android:content="@+id/slide_content"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="See system log for more output"
-    />
-</LinearLayout>
+        android:gravity="fill_horizontal"
+        android:layout_below="@id/sats_list"
+    >
+        <TextView
+            android:id="@id/slide_handle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Details..."
+        />
+        <LinearLayout
+            android:id="@id/slide_content"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+        >
+            <TextView
+                android:id="@+id/message"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+            />
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="See system log for more output"
+            />
+        </LinearLayout>
+    </SlidingDrawer>
+</RelativeLayout>
