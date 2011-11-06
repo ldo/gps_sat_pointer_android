@@ -24,17 +24,19 @@
         android:gravity="fill_horizontal"
         android:layout_below="@id/sats_list"
     >
-        <TextView
+        <View
             android:id="@id/slide_handle"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Details..."
+            android:layout_width="60dp"
+            android:layout_height="30dp"
+            android:background="@drawable/slide_handle"
         />
         <LinearLayout
             android:id="@id/slide_content"
             android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/slide_frame"
+            android:padding="6dp"
         >
             <TextView
                 android:id="@+id/message"
