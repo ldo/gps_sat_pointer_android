@@ -88,7 +88,8 @@ public class VectorView
     private static final float BaseBevel = 0.2f * BodyThickness;
     private static final int NrSectors = 12;
 
-    private final GeomBuilder.Obj ArrowShape;
+    private final GeomBuilder.Obj
+        CompassArrow, SatArrow;
 
     static class SatInfo
       {
@@ -123,7 +124,10 @@ public class VectorView
     SatInfo[] Sats = {};
     int FlashPrn = -1;
 
-    public VectorView()
+    private static GeomBuilder.Obj MakeArrow
+      (
+        boolean FullLength
+      )
       {
         final float OuterTiltCos =
             HeadThickness / (float)Math.hypot(HeadThickness, HeadLengthOuter);
@@ -139,11 +143,11 @@ public class VectorView
                 new GeomBuilder.Vec3f(0.0f, 1.0f, 0.0f),
                 new GeomBuilder.Vec3f(HeadThickness, 1.0f - HeadLengthOuter, 0.0f),
                 new GeomBuilder.Vec3f(BodyThickness, 1.0f - HeadLengthInner, 0.0f),
-                new GeomBuilder.Vec3f(BodyThickness, BaseBevel - 1.0f, 0.0f),
-                new GeomBuilder.Vec3f(BodyThickness - BaseBevel, -0.98f, 0.0f),
+                new GeomBuilder.Vec3f(BodyThickness, FullLength ? BaseBevel - 1.0f : BaseBevel, 0.0f),
+                new GeomBuilder.Vec3f(BodyThickness - BaseBevel, FullLength ? -0.98f : 0.02f, 0.0f),
                   /* y-coord of -1.0 seems to produce gaps in rendering when base
                     is face-on to viewer */
-                new GeomBuilder.Vec3f(0.0f, -1.0f, 0.0f),
+                new GeomBuilder.Vec3f(0.0f, FullLength ? -1.0f : 0.0f, 0.0f),
               };
         final GeomBuilder.Vec3f[] Normals =
             new GeomBuilder.Vec3f[]
@@ -159,51 +163,58 @@ public class VectorView
                   ), /* bevel */
                 new GeomBuilder.Vec3f(0.0f, -1.0f, 0.0f), /* base */
               };
-        ArrowShape = Lathe.Make
-          (
-            /*Points =*/
-                new Lathe.VertexFunc()
-                  {
-                    public GeomBuilder.Vec3f Get
-                      (
-                        int PointIndex
-                      )
+        return
+            Lathe.Make
+              (
+                /*Points =*/
+                    new Lathe.VertexFunc()
                       {
-                        return
-                            Points[PointIndex];
-                      } /*Get*/
-                  } /*VertexFunc*/,
-            /*NrPoints = */ Points.length,
-            /*Normal =*/
-                new Lathe.VectorFunc()
-                  {
-                    public GeomBuilder.Vec3f Get
-                      (
-                        int PointIndex,
-                        int SectorIndex, /* 0 .. NrSectors - 1 */
-                        boolean Upper
-                          /* indicates which of two calls for each point (except for
-                            start and end points, which only get one call each) to allow
-                            for discontiguous shading */
-                      )
+                        public GeomBuilder.Vec3f Get
+                          (
+                            int PointIndex
+                          )
+                          {
+                            return
+                                Points[PointIndex];
+                          } /*Get*/
+                      } /*VertexFunc*/,
+                /*NrPoints = */ Points.length,
+                /*Normal =*/
+                    new Lathe.VectorFunc()
                       {
-                        final float FaceAngle =
-                            (float)(2.0 * Math.PI * SectorIndex / NrSectors);
-                        final GeomBuilder.Vec3f OrigNormal =
-                            Normals[PointIndex - (Upper ? 0 : 1)];
-                        return
-                            new GeomBuilder.Vec3f
-                              (
-                                OrigNormal.x * android.util.FloatMath.cos(FaceAngle),
-                                OrigNormal.y,
-                                OrigNormal.x * android.util.FloatMath.sin(FaceAngle)
-                              );
-                      } /*Get*/
-                  } /*VectorFunc*/,
-            /*TexCoord = */ null,
-            /*VertexColor =*/ null,
-            /*NrSectors =*/ NrSectors
-          );
+                        public GeomBuilder.Vec3f Get
+                          (
+                            int PointIndex,
+                            int SectorIndex, /* 0 .. NrSectors - 1 */
+                            boolean Upper
+                              /* indicates which of two calls for each point (except for
+                                start and end points, which only get one call each) to allow
+                                for discontiguous shading */
+                          )
+                          {
+                            final float FaceAngle =
+                                (float)(2.0 * Math.PI * SectorIndex / NrSectors);
+                            final GeomBuilder.Vec3f OrigNormal =
+                                Normals[PointIndex - (Upper ? 0 : 1)];
+                            return
+                                new GeomBuilder.Vec3f
+                                  (
+                                    OrigNormal.x * android.util.FloatMath.cos(FaceAngle),
+                                    OrigNormal.y,
+                                    OrigNormal.x * android.util.FloatMath.sin(FaceAngle)
+                                  );
+                          } /*Get*/
+                      } /*VectorFunc*/,
+                /*TexCoord = */ null,
+                /*VertexColor =*/ null,
+                /*NrSectors =*/ NrSectors
+              );
+      } /*MakeArrow*/
+
+    public VectorView()
+      {
+        CompassArrow = MakeArrow(true);
+        SatArrow = MakeArrow(false);
       } /*VectorView*/
 
     public void SetOrientation
@@ -274,7 +285,7 @@ public class VectorView
         float Elevation,
         float Radius
       )
-      /* returns the coordinates where PointTo places the tip of the arrow. */
+      /* returns the coordinates where the tip of the arrow should lie. */
       {
         final Vec3f D = OurDirection(Azimuth, Elevation);
         final float[] Result = {0.0f, + Radius};
@@ -375,7 +386,7 @@ public class VectorView
                         new float[] {0.93f, 0.87f, 0.04f, 1.0f},
                 /*offset =*/ 0
               );
-            ArrowShape.Draw(); /* TBD old shape was half length of compass arrow */
+            SatArrow.Draw(); /* TBD old shape was half length of compass arrow */
             GLES11.glPopMatrix();
           } /*for*/
         GLES11.glMaterialfv
@@ -385,7 +396,7 @@ public class VectorView
             /*params =*/ new float[] {0.28f, 0.76f, 0.69f, 1.0f},
             /*offset =*/ 0
           );
-        ArrowShape.Draw();
+        CompassArrow.Draw();
       } /*Draw*/
 
   } /*VectorView*/
