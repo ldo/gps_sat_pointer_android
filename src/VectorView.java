@@ -81,10 +81,10 @@ class GraphicsUseful
 public class VectorView
   {
   /* parameters for arrow: */
-    private static final float BodyThickness = 0.10f;
-    private static final float HeadThickness = 0.2f;
-    private static final float HeadLengthOuter = 0.7f;
-    private static final float HeadLengthInner = 0.4f;
+    private static final float BodyThickness = 0.05f;
+    private static final float HeadThickness = 0.1f;
+    private static final float HeadLengthOuter = 0.4f;
+    private static final float HeadLengthInner = 0.2f;
     private static final float BaseBevel = 0.2f * BodyThickness;
     private static final int NrSectors = 12;
 
