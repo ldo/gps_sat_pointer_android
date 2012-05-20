@@ -141,6 +141,7 @@ public class Main extends android.app.Activity
         float DisplayRadius;
         android.os.Handler RunTask;
         Runnable NextUnflash = null;
+        private long LastUpdate = 0;
 
         public CommonListener()
           {
@@ -467,7 +468,13 @@ public class Main extends android.app.Activity
           )
           {
             Vectors.SetOrientation(Event.values);
-            Draw();
+            final long Now = System.currentTimeMillis();
+            if (Now - LastUpdate >= 125)
+              /* throttle redraws to reduce impact on UI responsiveness */
+              {
+                LastUpdate = Now;
+                Draw();
+              } /*if*/
           } /*onSensorChanged*/
 
       /* SurfaceHolder.Callback methods */
