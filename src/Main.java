@@ -313,7 +313,7 @@ public class Main extends android.app.Activity
               } /*if*/
             Vectors.FlashPrn = Prn;
             NextUnflash = new FlashResetter();
-            RunTask.postDelayed(NextUnflash, 250);
+            RunTask.postDelayed(NextUnflash, 500);
             Draw();
           } /*FlashSat*/
 
