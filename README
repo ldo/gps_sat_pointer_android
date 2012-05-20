@@ -15,6 +15,7 @@ my HTC Desire it is. However, turning the phone this way and that will
 often nudge it back into a sensible reading.
 
 Contents:
+    art/ -- artwork for icon
     src/ -- Java sources for the Android app
     res/ -- resources for the Android app
     AndroidManifest.xml, build.xml, *.properties -- for driving
