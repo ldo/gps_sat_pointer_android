@@ -9,7 +9,7 @@
         android:layout_height="130dp"
         android:gravity="fill_horizontal"
     />
-    <nz.gen.geek_central.GPSTest.VectorView
+    <SurfaceView
         android:id="@+id/vector_view"
         android:layout_width="fill_parent"
         android:layout_height="320dp"
