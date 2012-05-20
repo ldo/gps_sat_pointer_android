@@ -370,7 +370,7 @@ public class VectorView
                 /*pname =*/ GLES11.GL_SPECULAR,
                 /*params =*/
                     ThisSat.Prn == FlashPrn ?
-                        new float[] {0.81f, 0.82f, 0.93f, 1.0f}
+                        new float[] {0.81f, 0.08f, 0.93f, 1.0f}
                     :
                         new float[] {0.93f, 0.87f, 0.04f, 1.0f},
                 /*offset =*/ 0
