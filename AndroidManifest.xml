@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="nz.gen.geek_central.GPSTest"
     android:versionCode="1"
-    android:versionName="15278.0"
+    android:versionName="15480.1"
 >
     <uses-sdk
         android:minSdkVersion="7"
