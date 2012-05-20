@@ -362,8 +362,8 @@ public class VectorView
         for (SatInfo ThisSat : Sats)
           {
             GLES11.glPushMatrix();
-            GLES11.glRotatef(- GraphicsUseful.ToDegrees(ThisSat.Elevation), 1, 0, 0);
             GLES11.glRotatef(- GraphicsUseful.ToDegrees(ThisSat.Azimuth), 0, 0, 1);
+            GLES11.glRotatef(GraphicsUseful.ToDegrees(ThisSat.Elevation), 1, 0, 0);
             GLES11.glMaterialfv
               (
                 /*face =*/ GLES11.GL_FRONT_AND_BACK,
