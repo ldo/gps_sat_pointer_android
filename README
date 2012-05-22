@@ -1,4 +1,4 @@
-GPS Test is a sample Android application demonstrating how to use a
+GPS Sat Pointer is a sample Android application demonstrating how to use a
 SurfaceView to display a dynamically-updated set of 3D arrows with
 OpenGL showing the position of GPS satellites and the current compass
 orientation. The source code includes the following utility classes:

@@ -1,4 +1,4 @@
-package nz.gen.geek_central.GPSTest;
+package nz.gen.geek_central.GPSSatPointer;
 /*
     Receive notification of changes to system time
 

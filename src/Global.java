@@ -1,6 +1,6 @@
-package nz.gen.geek_central.GPSTest;
+package nz.gen.geek_central.GPSSatPointer;
 /*
-    Global data for GPS Test program
+    Global data for GPS Sat Pointer program
 
     Copyright 2011 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 

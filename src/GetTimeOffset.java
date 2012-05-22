@@ -1,4 +1,4 @@
-package nz.gen.geek_central.GPSTest;
+package nz.gen.geek_central.GPSSatPointer;
 /*
     Respond to request for offset of system time from GPS time
 

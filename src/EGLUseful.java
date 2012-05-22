@@ -1,4 +1,4 @@
-package nz.gen.geek_central.GPSTest;
+package nz.gen.geek_central.GPSSatPointer;
 /*
     Useful EGL-related definitions.
 

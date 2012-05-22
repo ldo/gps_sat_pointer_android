@@ -1,4 +1,4 @@
-package nz.gen.geek_central.GPSTest;
+package nz.gen.geek_central.GPSSatPointer;
 /*
     Example of getting location and satellite info from GPS.
 
@@ -363,7 +363,7 @@ public class Main extends android.app.Activity
                           {
                             System.err.printf
                               (
-                                "GPSTest.Main EGL error 0x%04x\n", EGLError
+                                "GPSSatPointer.Main EGL error 0x%04x\n", EGLError
                               );
                           } /*if*/
                       }
@@ -500,7 +500,7 @@ public class Main extends android.app.Activity
             int Height
           )
           {
-            System.err.println("GPSTest.Main surfaceChanged"); /* debug */
+            System.err.println("GPSSatPointer.Main surfaceChanged"); /* debug */
             Stop();
             SurfaceExists = true;
             if (Active)
@@ -515,7 +515,7 @@ public class Main extends android.app.Activity
           )
           {
           /* do everything in surfaceChanged */
-            System.err.println("GPSTest.Main surfaceCreated"); /* debug */
+            System.err.println("GPSSatPointer.Main surfaceCreated"); /* debug */
           } /*surfaceCreated*/
 
         public void surfaceDestroyed
@@ -525,7 +525,7 @@ public class Main extends android.app.Activity
           {
             SurfaceExists = false;
             Stop();
-            System.err.println("GPSTest.Main surfaceDestroyed"); /* debug */
+            System.err.println("GPSSatPointer.Main surfaceDestroyed"); /* debug */
           } /*surfaceDestroyed*/
 
       } /*CommonListener*/
@@ -812,7 +812,7 @@ public class Main extends android.app.Activity
               }
             else
               {
-                Msg.println("GPSTest: No location service found!");
+                Msg.println("No location service found!");
               } /*if*/
             Message2.setText(MessageBuf.toString());
           }
