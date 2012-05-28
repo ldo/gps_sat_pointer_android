@@ -337,6 +337,7 @@ public class Main extends android.app.Activity
             final android.graphics.Canvas Display = Graphical.getHolder().lockCanvas();
             if (Display != null)
               {
+                final long Now = System.currentTimeMillis();
                 Display.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
                   /* initialize all pixels to fully transparent */
                 Display.save();
@@ -400,7 +401,15 @@ public class Main extends android.app.Activity
                         /*UsePaint =*/ TextPaint
                       );
                   } /*for*/
+                GraphicsUseful.DrawCenteredText
+                  (
+                    /*Draw =*/ Display,
+                    /*TheText =*/ String.format("%.2ffps", 1000.0 / (Now - LastUpdate)),
+                    /*Where =*/ new android.graphics.PointF(0.0f, DisplayRadius * 0.9f),
+                    /*UsePaint =*/ TextPaint
+                  );
                 Display.restore();
+                LastUpdate = Now;
                 Graphical.getHolder().unlockCanvasAndPost(Display);
               }
             else
@@ -486,7 +495,6 @@ public class Main extends android.app.Activity
             if (Now - LastUpdate >= 125)
               /* throttle redraws to reduce impact on UI responsiveness */
               {
-                LastUpdate = Now;
                 Draw();
               } /*if*/
           } /*onSensorChanged*/
