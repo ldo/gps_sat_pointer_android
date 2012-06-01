@@ -404,7 +404,7 @@ public class Main extends android.app.Activity
                 GraphicsUseful.DrawCenteredText
                   (
                     /*Draw =*/ Display,
-                    /*TheText =*/ String.format("%.2ffps", 1000.0 / (Now - LastUpdate)),
+                    /*TheText =*/ String.format("%dms@%.2ffps", System.currentTimeMillis() - Now, 1000.0 / (Now - LastUpdate)),
                     /*Where =*/ new android.graphics.PointF(0.0f, DisplayRadius * 0.9f),
                     /*UsePaint =*/ TextPaint
                   );
