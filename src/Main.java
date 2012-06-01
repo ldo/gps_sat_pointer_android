@@ -153,6 +153,7 @@ public class Main extends android.app.Activity
         private int Rotation;
         private Matrix ArrowsTransform;
         float DisplayRadius;
+        final android.graphics.Paint TextPaint, BackgroundPaint;
         android.os.Handler RunTask;
         Runnable NextUnflash = null;
         private long LastUpdate = 0;
@@ -162,6 +163,11 @@ public class Main extends android.app.Activity
             Display = EGLUseful.NewDisplay();
             Vectors = new VectorView();
             RunTask = new android.os.Handler();
+            TextPaint = GraphicsUseful.FillWithColor(0xff887f04);
+            TextPaint.setTextSize(28.0f);
+            TextPaint.setTextAlign(android.graphics.Paint.Align.CENTER);
+            TextPaint.setAntiAlias(true);
+            BackgroundPaint = GraphicsUseful.FillWithColor(0xff0a6d01);
           } /*CommonListener*/
 
         public void Start()
@@ -348,12 +354,8 @@ public class Main extends android.app.Activity
                     /*startAngle =*/ 0.0f,
                     /*sweepAngle =*/ 360.0f,
                     /*useCenter =*/ false,
-                    /*paint =*/ GraphicsUseful.FillWithColor(0xff0a6d01)
+                    /*paint =*/ BackgroundPaint
                   );
-                final android.graphics.Paint TextPaint = GraphicsUseful.FillWithColor(0xff887f04);
-                TextPaint.setTextSize(28.0f);
-                TextPaint.setTextAlign(android.graphics.Paint.Align.CENTER);
-                TextPaint.setAntiAlias(true);
                 if (GLContext != null)
                   {
                     GLContext.SetCurrent();
