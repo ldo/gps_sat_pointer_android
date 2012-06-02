@@ -156,7 +156,7 @@ public class Main extends android.app.Activity
         final android.graphics.Paint TextPaint, BackgroundPaint;
         android.os.Handler RunTask;
         Runnable NextUnflash = null;
-        private long LastUpdate = 0;
+        private long LastUpdate = 0, LastDrawTime = 0;
 
         public CommonListener()
           {
@@ -340,83 +340,88 @@ public class Main extends android.app.Activity
         private void Draw()
           /* (re)draws the complete composited display. */
           {
-            final android.graphics.Canvas Display = Graphical.getHolder().lockCanvas();
-            if (Display != null)
+            final long Now = System.currentTimeMillis();
+            if (Now - LastUpdate >= (long)(LastDrawTime * 2.0f))
+              /* throttle redraws to reduce impact on UI responsiveness */
               {
-                final long Now = System.currentTimeMillis();
-                Display.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
-                  /* initialize all pixels to fully transparent */
-                Display.save();
-                Display.translate(DisplayRadius, DisplayRadius);
-                Display.drawArc /* background */
-                  (
-                    /*oval =*/ new android.graphics.RectF(-DisplayRadius, -DisplayRadius, DisplayRadius, DisplayRadius),
-                    /*startAngle =*/ 0.0f,
-                    /*sweepAngle =*/ 360.0f,
-                    /*useCenter =*/ false,
-                    /*paint =*/ BackgroundPaint
-                  );
-                if (GLContext != null)
+                final android.graphics.Canvas Display = Graphical.getHolder().lockCanvas();
+                if (Display != null)
                   {
-                    GLContext.SetCurrent();
-                    Vectors.Draw();
-                      { /* debug */
-                        final int EGLError = EGLUseful.EGL.eglGetError();
-                        if (EGLError != EGL10.EGL_SUCCESS)
-                          {
-                            System.err.printf
-                              (
-                                "GPSSatPointer.Main EGL error 0x%04x\n", EGLError
-                              );
-                          } /*if*/
-                      }
-                    GLES11.glFinish();
-                    GLES11.glReadPixels
+                    Display.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
+                      /* initialize all pixels to fully transparent */
+                    Display.save();
+                    Display.translate(DisplayRadius, DisplayRadius);
+                    Display.drawArc /* background */
                       (
-                        /*x =*/ 0,
-                        /*y =*/ 0,
-                        /*width =*/ GLBits.getWidth(),
-                        /*height =*/ GLBits.getHeight(),
-                        /*format =*/ GLES11.GL_RGBA,
-                        /*type =*/ GLES11.GL_UNSIGNED_BYTE,
-                        /*pixels =*/ GLPixels
+                        /*oval =*/ new android.graphics.RectF(-DisplayRadius, -DisplayRadius, DisplayRadius, DisplayRadius),
+                        /*startAngle =*/ 0.0f,
+                        /*sweepAngle =*/ 360.0f,
+                        /*useCenter =*/ false,
+                        /*paint =*/ BackgroundPaint
                       );
-                    GLContext.ClearCurrent();
-                    GLBits.copyPixelsFromBuffer(GLPixels);
-                    Display.drawBitmap(GLBits, ArrowsTransform, null);
-                  } /*if*/
-              /* now draw text labels on top */
-                GraphicsUseful.DrawCenteredText
-                  (
-                    /*Draw =*/ Display,
-                    /*TheText =*/ "N",
-                    /*Where =*/ Vectors.PointAt(0.0f, 0.0f, DisplayRadius),
-                    /*UsePaint =*/ TextPaint
-                  );
-                for (VectorView.SatInfo ThisSat : Vectors.Sats)
-                  {
+                    if (GLContext != null)
+                      {
+                        GLContext.SetCurrent();
+                        Vectors.Draw();
+                          { /* debug */
+                            final int EGLError = EGLUseful.EGL.eglGetError();
+                            if (EGLError != EGL10.EGL_SUCCESS)
+                              {
+                                System.err.printf
+                                  (
+                                    "GPSSatPointer.Main EGL error 0x%04x\n", EGLError
+                                  );
+                              } /*if*/
+                          }
+                        GLES11.glFinish();
+                        GLES11.glReadPixels
+                          (
+                            /*x =*/ 0,
+                            /*y =*/ 0,
+                            /*width =*/ GLBits.getWidth(),
+                            /*height =*/ GLBits.getHeight(),
+                            /*format =*/ GLES11.GL_RGBA,
+                            /*type =*/ GLES11.GL_UNSIGNED_BYTE,
+                            /*pixels =*/ GLPixels
+                          );
+                        GLContext.ClearCurrent();
+                        GLBits.copyPixelsFromBuffer(GLPixels);
+                        Display.drawBitmap(GLBits, ArrowsTransform, null);
+                      } /*if*/
+                  /* now draw text labels on top */
                     GraphicsUseful.DrawCenteredText
                       (
                         /*Draw =*/ Display,
-                        /*TheText =*/ String.format("%d", ThisSat.Prn),
-                        /*Where =*/ Vectors.PointAt(ThisSat.Azimuth, ThisSat.Elevation, DisplayRadius),
+                        /*TheText =*/ "N",
+                        /*Where =*/ Vectors.PointAt(0.0f, 0.0f, DisplayRadius),
                         /*UsePaint =*/ TextPaint
                       );
-                  } /*for*/
-                GraphicsUseful.DrawCenteredText
-                  (
-                    /*Draw =*/ Display,
-                    /*TheText =*/ String.format("%dms@%.2ffps", System.currentTimeMillis() - Now, 1000.0 / (Now - LastUpdate)),
-                    /*Where =*/ new android.graphics.PointF(0.0f, DisplayRadius * 0.9f),
-                    /*UsePaint =*/ TextPaint
-                  );
-                Display.restore();
-                LastUpdate = Now;
-                Graphical.getHolder().unlockCanvasAndPost(Display);
-              }
-            else
-              {
-                System.err.println("Graphical surface not ready");
+                    for (VectorView.SatInfo ThisSat : Vectors.Sats)
+                      {
+                        GraphicsUseful.DrawCenteredText
+                          (
+                            /*Draw =*/ Display,
+                            /*TheText =*/ String.format("%d", ThisSat.Prn),
+                            /*Where =*/ Vectors.PointAt(ThisSat.Azimuth, ThisSat.Elevation, DisplayRadius),
+                            /*UsePaint =*/ TextPaint
+                          );
+                      } /*for*/
+                    LastDrawTime = System.currentTimeMillis() - Now;
+                    GraphicsUseful.DrawCenteredText
+                      (
+                        /*Draw =*/ Display,
+                        /*TheText =*/ String.format("%dms@%.2ffps", LastDrawTime, 1000.0 / (Now - LastUpdate)),
+                        /*Where =*/ new android.graphics.PointF(0.0f, DisplayRadius * 0.9f),
+                        /*UsePaint =*/ TextPaint
+                      );
+                    Display.restore();
+                    LastUpdate = Now;
+                    Graphical.getHolder().unlockCanvasAndPost(Display);
+                  }
+                else
+                  {
+                    System.err.println("Graphical surface not ready");
+                  } /*if*/
               } /*if*/
           } /*Draw*/
 
@@ -493,12 +498,7 @@ public class Main extends android.app.Activity
           )
           {
             Vectors.SetOrientation(Event.values);
-            final long Now = System.currentTimeMillis();
-            if (Now - LastUpdate >= 125)
-              /* throttle redraws to reduce impact on UI responsiveness */
-              {
-                Draw();
-              } /*if*/
+            Draw();
           } /*onSensorChanged*/
 
       /* SurfaceHolder.Callback methods */
