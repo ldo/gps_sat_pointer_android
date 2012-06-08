@@ -286,6 +286,7 @@ public class Main extends android.app.Activity
                 GLBits.recycle();
                 GLBits = null;
               } /*if*/
+            GLPixels = null;
           } /*ReleaseGL*/
 
         public void SetSats
