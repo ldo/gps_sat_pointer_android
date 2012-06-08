@@ -1,7 +1,13 @@
-GPS Sat Pointer is a sample Android application demonstrating how to use a
-SurfaceView to display a dynamically-updated set of 3D arrows with
-OpenGL showing the position of GPS satellites and the current compass
-orientation. The source code includes the following utility classes:
+GPS Sat Pointer is a sample Android application demonstrating how to
+use a SurfaceView to display a dynamically-updated set of 3D arrows
+with OpenGL showing the position of GPS satellites and the current
+compass orientation.
+
+Note I use a SurfaceView, not a GLSurfaceView. I don't do the OpenGL
+drawing directly on-screen, I do it off-screen to composite with my
+own additional graphics before display.
+
+The source code includes the following utility classes:
   * EGLUseful: management of EGL context and doing offscreen OpenGL
     rendering using pbuffers
   * GeomBuilder: basic management of 3D object geometry and rendering
@@ -10,9 +16,9 @@ orientation. The source code includes the following utility classes:
   * VectorView: how to use sensor data to draw 3D direction arrows
   * Vec3f: functional operations on vectors representing 3D coordinates
 
-Note that the compass direction is sometimes inaccurate--at least, on
-my HTC Desire it is. However, turning the phone this way and that will
-often nudge it back into a sensible reading.
+Note that the compass direction is often inaccurate to begin with.
+However, turning the phone this way and that will often nudge it
+back into a sensible reading.
 
 Contents:
     art/ -- artwork for icon
