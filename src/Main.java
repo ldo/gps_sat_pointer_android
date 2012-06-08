@@ -172,9 +172,9 @@ public class Main extends android.app.Activity
 
         public void Start()
           {
-            AllocateGL();
             Rotation = (5 - Main.this.getWindowManager().getDefaultDisplay().getOrientation()) % 4;
             DisplayRadius = (float)Math.min(Graphical.getWidth(), Graphical.getHeight()) / 2.0f;
+            AllocateGL();
             ArrowsTransform = new Matrix();
             ArrowsTransform.preScale
               (
@@ -232,8 +232,7 @@ public class Main extends android.app.Activity
 
         private void AllocateGL()
           {
-            final int Width = Graphical.getWidth();
-            final int Height = Graphical.getHeight();
+            final int GLSize = (int)(2.0f * DisplayRadius);
             GLContext = EGLUseful.SurfaceContext.CreatePbuffer
               (
                 /*ForDisplay =*/ Display,
@@ -254,22 +253,22 @@ public class Main extends android.app.Activity
                                     EGL10.EGL_NONE /* marks end of list */
                                 }
                       ),
-                /*Width =*/ Width,
-                /*Height =*/ Height,
+                /*Width =*/ GLSize,
+                /*Height =*/ GLSize,
                 /*ExactSize =*/ true,
                 /*ShareContext =*/ null
               );
             GLContext.SetCurrent();
-            Vectors.Setup(Width, Height);
+            Vectors.Setup(GLSize, GLSize);
             GLContext.ClearCurrent();
             GLPixels = ByteBuffer.allocateDirect
               (
-                Width * Height * 4
+                GLSize * GLSize * 4
               ).order(java.nio.ByteOrder.nativeOrder());
             GLBits = android.graphics.Bitmap.createBitmap
               (
-                /*width =*/ Width,
-                /*height =*/ Height,
+                /*width =*/ GLSize,
+                /*height =*/ GLSize,
                 /*config =*/ android.graphics.Bitmap.Config.ARGB_8888
               );
           } /*AllocateGL*/
