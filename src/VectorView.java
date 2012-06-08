@@ -330,7 +330,7 @@ public class VectorView
                         new float[] {0.93f, 0.87f, 0.04f, 1.0f},
                 /*offset =*/ 0
               );
-            SatArrow.Draw(); /* TBD old shape was half length of compass arrow */
+            SatArrow.Draw();
             GLES11.glPopMatrix();
           } /*for*/
         GLES11.glMaterialfv
