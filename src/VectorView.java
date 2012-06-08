@@ -22,62 +22,6 @@ import android.opengl.GLES11;
 import nz.gen.geek_central.GLUseful.GeomBuilder;
 import nz.gen.geek_central.GLUseful.Lathe;
 
-class GraphicsUseful
-  {
-    public final static float Pi = (float)Math.PI;
-
-    public static float ToRadians
-      (
-        float Degrees
-      )
-      {
-        return Pi * Degrees / 180.0f;
-      } /*ToRadians*/
-
-    public static float ToDegrees
-      (
-        float Radians
-      )
-      {
-        return 180.0f * Radians / Pi;
-      } /*ToDegrees*/
-
-    public static android.graphics.Paint FillWithColor
-      (
-        int TheColor
-      )
-      /* returns a Paint that will fill with a solid colour. */
-      {
-        final android.graphics.Paint ThePaint = new android.graphics.Paint();
-        ThePaint.setStyle(android.graphics.Paint.Style.FILL);
-        ThePaint.setColor(TheColor);
-        ThePaint.setAntiAlias(true);
-        return
-            ThePaint;
-      } /*FillWithColor*/
-
-    public static void DrawCenteredText
-      (
-        android.graphics.Canvas Draw,
-        String TheText,
-        android.graphics.PointF Where,
-        android.graphics.Paint UsePaint
-      )
-      /* draws text at position x, vertically centred around y. */
-      {
-        final android.graphics.Rect TextBounds = new android.graphics.Rect();
-        UsePaint.getTextBounds(TheText, 0, TheText.length(), TextBounds);
-        Draw.drawText
-          (
-            TheText,
-            Where.x, /* depend on UsePaint to align horizontally */
-            Where.y - (TextBounds.bottom + TextBounds.top) / 2.0f,
-            UsePaint
-          );
-      } /*DrawCenteredText*/
-
-  } /*GraphicsUseful*/
-
 public class VectorView
   {
   /* parameters for arrow: */
@@ -157,8 +101,8 @@ public class VectorView
                 new GeomBuilder.Vec3f(1.0f, 0.0f, 0.0f), /* body */
                 new GeomBuilder.Vec3f
                   (
-                    android.util.FloatMath.sqrt(0.5f),
-                    -android.util.FloatMath.sqrt(0.5f),
+                    FloatMath.sqrt(0.5f),
+                    -FloatMath.sqrt(0.5f),
                     0.0f
                   ), /* bevel */
                 new GeomBuilder.Vec3f(0.0f, -1.0f, 0.0f), /* base */
@@ -199,9 +143,9 @@ public class VectorView
                             return
                                 new GeomBuilder.Vec3f
                                   (
-                                    OrigNormal.x * android.util.FloatMath.cos(FaceAngle),
+                                    OrigNormal.x * FloatMath.cos(FaceAngle),
                                     OrigNormal.y,
-                                    OrigNormal.x * android.util.FloatMath.sin(FaceAngle)
+                                    OrigNormal.x * FloatMath.sin(FaceAngle)
                                   );
                           } /*Get*/
                       } /*VectorFunc*/,
