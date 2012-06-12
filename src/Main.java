@@ -163,7 +163,7 @@ public class Main extends android.app.Activity
         private int Rotation;
         private Matrix ArrowsTransform;
         float DisplayRadius;
-        final android.graphics.Paint TextPaint, BackgroundPaint;
+        final android.graphics.Paint TextPaint, BackgroundPaint, ArrowsPaint;
         android.os.Handler RunTask;
         Runnable NextUnflash = null;
         private long LastUpdate = 0, LastDrawTime = 0;
@@ -178,6 +178,18 @@ public class Main extends android.app.Activity
             TextPaint.setTextAlign(android.graphics.Paint.Align.CENTER);
             TextPaint.setAntiAlias(true);
             BackgroundPaint = GraphicsUseful.FillWithColor(0xff0a6d01);
+            if (true/*UsePBuffers*/)
+              {
+                ArrowsPaint = null;
+              }
+            else
+              {
+              /* try to do overlaying this way in lieu of alpha, but it slows things down */
+                ArrowsPaint = new android.graphics.Paint();
+                ArrowsPaint.setStyle(android.graphics.Paint.Style.FILL);
+                ArrowsPaint.setAntiAlias(true);
+                ArrowsPaint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.LIGHTEN));
+              } /*if*/
           } /*CommonListener*/
 
         public void Start()
@@ -448,7 +460,7 @@ public class Main extends android.app.Activity
                           {
                             GLContext.ClearCurrent();
                           } /*if*/
-                        Display.drawBitmap(GLBits, ArrowsTransform, null);
+                        Display.drawBitmap(GLBits, ArrowsTransform, ArrowsPaint);
                       } /*if*/
                   /* now draw text labels on top */
                     GraphicsUseful.DrawCenteredText
