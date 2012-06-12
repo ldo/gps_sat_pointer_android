@@ -1,8 +1,8 @@
-package nz.gen.geek_central.GPSSatPointer;
+package nz.gen.geek_central.GLUseful;
 /*
     Useful EGL-related definitions.
 
-    Copyright 2011 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    Copyright 2011, 2012 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -194,6 +194,23 @@ public class EGLUseful
               );
       } /*CreatePbufferSurface*/
 
+    public static EGLSurface CreateBitmapSurface
+      (
+        EGLDisplay ForDisplay,
+        EGLConfig WithConfig,
+        android.graphics.Bitmap ForBitmap
+      )
+      {
+        return
+            EGL.eglCreatePixmapSurface
+              (
+                /*display =*/ ForDisplay,
+                /*config =*/ WithConfig,
+                /*native_pixmap =*/ ForBitmap,
+                /*attrib_list =*/ null
+              );
+      } /*CreateBitmapSurface*/
+
     public static class SurfaceContext
       /* easy management of surface together with context */
       {
@@ -261,6 +278,51 @@ public class EGLUseful
             return
                 new SurfaceContext(ForDisplay, UseContext, TheSurface);
           } /*CreatePbuffer*/
+
+        public static SurfaceContext CreateBitmap
+          (
+            EGLDisplay ForDisplay,
+            EGLConfig[] TryConfigs, /* to be tried in turn */
+            android.graphics.Bitmap ForBitmap,
+            EGLContext ShareContext /* pass null or EGL_NO_CONTEXT to not share existing context */
+          )
+          /* creates a native-pixmap surface and Context using one of the available
+            configs. */
+          {
+            EGLSurface TheSurface = null;
+            EGLContext UseContext = null;
+            for (int i = 0;;)
+              {
+                if (i == TryConfigs.length)
+                  {
+                    Fail("creating Bitmap surface");
+                  } /*if*/
+                TheSurface = CreateBitmapSurface
+                  (
+                    /*ForDisplay =*/ ForDisplay,
+                    /*WithConfig =*/ TryConfigs[i],
+                    /*ForBitmap =*/ ForBitmap
+                  );
+                if (TheSurface != EGL10.EGL_NO_SURFACE)
+                  {
+                    UseContext = EGL.eglCreateContext
+                      (
+                        /*display =*/ ForDisplay,
+                        /*config =*/ TryConfigs[i],
+                        /*share_context =*/ ShareContext == null ? EGL10.EGL_NO_CONTEXT : ShareContext,
+                        /*attrib_list =*/ null
+                      );
+                    if (UseContext == EGL10.EGL_NO_CONTEXT)
+                      {
+                        Fail("creating context");
+                      } /*if*/
+                    break;
+                  } /*if*/
+                ++i;
+              } /*for*/
+            return
+                new SurfaceContext(ForDisplay, UseContext, TheSurface);
+          } /*CreateBitmap*/
 
         public void SetCurrent()
           /* sets surface and context as current. */

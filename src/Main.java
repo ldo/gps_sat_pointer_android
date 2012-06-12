@@ -26,6 +26,7 @@ import android.graphics.Matrix;
 import android.opengl.GLES11;
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLDisplay;
+import nz.gen.geek_central.GLUseful.EGLUseful;
 
 class TimeUseful
   {
@@ -145,6 +146,7 @@ public class Main extends android.app.Activity
             android.hardware.SensorEventListener,
             android.view.SurfaceHolder.Callback
       {
+        private final static boolean UsePBuffers = false;
         private final EGLDisplay Display;
         private EGLUseful.SurfaceContext GLContext;
         private ByteBuffer GLPixels;
@@ -176,12 +178,15 @@ public class Main extends android.app.Activity
             DisplayRadius = (float)Math.min(Graphical.getWidth(), Graphical.getHeight()) / 2.0f;
             AllocateGL();
             ArrowsTransform = new Matrix();
-            ArrowsTransform.preScale
-              (
-                1, -1,
-                0, GLBits.getHeight() / 2.0f
-              );
-              /* Y-axis goes up for OpenGL, down for 2D Canvas */
+            if (UsePBuffers)
+              {
+                ArrowsTransform.preScale
+                  (
+                    1, -1,
+                    0, GLBits.getHeight() / 2.0f
+                  );
+                  /* Y-axis goes up for OpenGL, down for 2D Canvas */
+              } /*if*/
             ArrowsTransform.postRotate
               (
                 (Rotation - 1) * 90.0f,
@@ -233,44 +238,83 @@ public class Main extends android.app.Activity
         private void AllocateGL()
           {
             final int GLSize = (int)(2.0f * DisplayRadius);
-            GLContext = EGLUseful.SurfaceContext.CreatePbuffer
-              (
-                /*ForDisplay =*/ Display,
-                /*TryConfigs =*/
-                    EGLUseful.GetCompatConfigs
-                      (
-                        /*ForDisplay =*/ Display,
-                        /*MatchingAttribs =*/
-                            new int[]
-                                {
-                                    EGL10.EGL_RED_SIZE, 8,
-                                    EGL10.EGL_GREEN_SIZE, 8,
-                                    EGL10.EGL_BLUE_SIZE, 8,
-                                    EGL10.EGL_ALPHA_SIZE, 8,
-                                    EGL10.EGL_DEPTH_SIZE, 16,
-                                    EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-                                    EGL10.EGL_CONFIG_CAVEAT, EGL10.EGL_NONE,
-                                    EGL10.EGL_NONE /* marks end of list */
-                                }
-                      ),
-                /*Width =*/ GLSize,
-                /*Height =*/ GLSize,
-                /*ExactSize =*/ true,
-                /*ShareContext =*/ null
-              );
+            if (UsePBuffers)
+              {
+                GLContext = EGLUseful.SurfaceContext.CreatePbuffer
+                  (
+                    /*ForDisplay =*/ Display,
+                    /*TryConfigs =*/
+                        EGLUseful.GetCompatConfigs
+                          (
+                            /*ForDisplay =*/ Display,
+                            /*MatchingAttribs =*/
+                                new int[]
+                                    {
+                                        EGL10.EGL_RED_SIZE, 8,
+                                        EGL10.EGL_GREEN_SIZE, 8,
+                                        EGL10.EGL_BLUE_SIZE, 8,
+                                        EGL10.EGL_ALPHA_SIZE, 8,
+                                        EGL10.EGL_DEPTH_SIZE, 16,
+                                        EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
+                                        EGL10.EGL_CONFIG_CAVEAT, EGL10.EGL_NONE,
+                                        EGL10.EGL_NONE /* marks end of list */
+                                    }
+                          ),
+                    /*Width =*/ GLSize,
+                    /*Height =*/ GLSize,
+                    /*ExactSize =*/ true,
+                    /*ShareContext =*/ null
+                  );
+              }
+            else
+              {
+                GLBits = android.graphics.Bitmap.createBitmap
+                  (
+                    /*width =*/ GLSize,
+                    /*height =*/ GLSize,
+                    /*config =*/ android.graphics.Bitmap.Config.RGB_565
+                  );
+                GLContext = EGLUseful.SurfaceContext.CreateBitmap
+                  (
+                    /*ForDisplay =*/ Display,
+                    /*TryConfigs =*/
+                        EGLUseful.GetCompatConfigs
+                          (
+                            /*ForDisplay =*/ Display,
+                            /*MatchingAttribs =*/
+                                new int[]
+                                    {
+                                        EGL10.EGL_RED_SIZE, 5,
+                                        EGL10.EGL_GREEN_SIZE, 6,
+                                        EGL10.EGL_BLUE_SIZE, 5,
+                                        EGL10.EGL_ALPHA_SIZE, 0,
+                                        EGL10.EGL_DEPTH_SIZE, 16,
+                                        EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PIXMAP_BIT,
+                                      /* no point checking EGL_CONFIG_CAVEAT, I know they'll
+                                        all be EGL_SLOW_CONFIG */
+                                        EGL10.EGL_NONE /* marks end of list */
+                                    }
+                          ),
+                    /*ForBitmap =*/ GLBits,
+                    /*ShareContext =*/ null
+                  );
+              } /*if*/
             GLContext.SetCurrent();
             Vectors.Setup(GLSize, GLSize);
             GLContext.ClearCurrent();
-            GLPixels = ByteBuffer.allocateDirect
-              (
-                GLSize * GLSize * 4
-              ).order(java.nio.ByteOrder.nativeOrder());
-            GLBits = android.graphics.Bitmap.createBitmap
-              (
-                /*width =*/ GLSize,
-                /*height =*/ GLSize,
-                /*config =*/ android.graphics.Bitmap.Config.ARGB_8888
-              );
+            if (UsePBuffers)
+              {
+                GLPixels = ByteBuffer.allocateDirect
+                  (
+                    GLSize * GLSize * 4
+                  ).order(java.nio.ByteOrder.nativeOrder());
+                GLBits = android.graphics.Bitmap.createBitmap
+                  (
+                    /*width =*/ GLSize,
+                    /*height =*/ GLSize,
+                    /*config =*/ android.graphics.Bitmap.Config.ARGB_8888
+                  );
+              } /*if*/
           } /*AllocateGL*/
 
         private void ReleaseGL()
@@ -374,18 +418,25 @@ public class Main extends android.app.Activity
                               } /*if*/
                           }
                         GLES11.glFinish();
-                        GLES11.glReadPixels
-                          (
-                            /*x =*/ 0,
-                            /*y =*/ 0,
-                            /*width =*/ GLBits.getWidth(),
-                            /*height =*/ GLBits.getHeight(),
-                            /*format =*/ GLES11.GL_RGBA,
-                            /*type =*/ GLES11.GL_UNSIGNED_BYTE,
-                            /*pixels =*/ GLPixels
-                          );
-                        GLContext.ClearCurrent();
-                        GLBits.copyPixelsFromBuffer(GLPixels);
+                        if (UsePBuffers)
+                          {
+                            GLES11.glReadPixels
+                              (
+                                /*x =*/ 0,
+                                /*y =*/ 0,
+                                /*width =*/ GLBits.getWidth(),
+                                /*height =*/ GLBits.getHeight(),
+                                /*format =*/ GLES11.GL_RGBA,
+                                /*type =*/ GLES11.GL_UNSIGNED_BYTE,
+                                /*pixels =*/ GLPixels
+                              );
+                            GLContext.ClearCurrent();
+                            GLBits.copyPixelsFromBuffer(GLPixels);
+                          }
+                        else
+                          {
+                            GLContext.ClearCurrent();
+                          } /*if*/
                         Display.drawBitmap(GLBits, ArrowsTransform, null);
                       } /*if*/
                   /* now draw text labels on top */
