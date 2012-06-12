@@ -9,7 +9,7 @@ own additional graphics before display.
 
 The source code includes the following utility classes:
   * EGLUseful: management of EGL context and doing offscreen OpenGL
-    rendering using pbuffers
+    rendering using either pbuffers or bitmaps
   * GeomBuilder: basic management of 3D object geometry and rendering
   * Lathe: uses GeomBuilder to construct objects with rotational symmetry
   * Mat4f: functional operations on matrices representing 3D homogeneous coordinates

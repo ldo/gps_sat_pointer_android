@@ -147,6 +147,14 @@ public class Main extends android.app.Activity
             android.view.SurfaceHolder.Callback
       {
         private final static boolean UsePBuffers = false;
+          /* off-screen PBuffers give same rendering speed and quality as
+            on-screen rendering. Unfortunately the only way to get back those
+            pixels is via glReadPixels, which for some reason is very slow.
+            Using EGL "native pixmaps" (Bitmap objects on Android) seems
+            to come with EGL_SLOW_CONFIG attached as a caveat to all the
+            appropriate configs, and also you only get 16-bit instead of 32-bit
+            quality (and no alpha), yet avoiding the copy-back step leads
+            to a much greater frame rate overall. */
         private final EGLDisplay Display;
         private EGLUseful.SurfaceContext GLContext;
         private ByteBuffer GLPixels;
@@ -268,6 +276,9 @@ public class Main extends android.app.Activity
               }
             else
               {
+              /* unfortunately, while your hardware may list ARGB_8888-compatible
+                configs among those available, trying to use them seems to return
+                an EGL_BAD_MATCH error */
                 GLBits = android.graphics.Bitmap.createBitmap
                   (
                     /*width =*/ GLSize,
