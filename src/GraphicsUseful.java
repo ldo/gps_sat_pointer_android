@@ -1,3 +1,4 @@
+package nz.gen.geek_central.GPSSatPointer;
 /*
     Useful 2D graphics stuff.
 
