@@ -18,12 +18,13 @@ package nz.gen.geek_central.GPSSatPointer;
 */
 
 import android.util.FloatMath;
-import android.opengl.GLES11;
 import nz.gen.geek_central.GLUseful.GeomBuilder;
 import nz.gen.geek_central.GLUseful.Lathe;
 
 public class VectorView
   {
+    static final android.opengl.GLES11 gl = new android.opengl.GLES11(); /* for easier references */
+
   /* parameters for arrow: */
     private static final float BodyThickness = 0.05f;
     private static final float HeadThickness = 0.1f;
@@ -249,16 +250,16 @@ public class VectorView
       )
       /* initial setup for drawing that doesn't need to be done for every frame. */
       {
-        GLES11.glEnable(GLES11.GL_CULL_FACE);
-      /* GLES11.glEnable(GLES11.GL_MULTISAMPLE); */ /* doesn't seem to make any difference */
-        GLES11.glShadeModel(GLES11.GL_SMOOTH);
-        GLES11.glEnable(GLES11.GL_LIGHTING);
-        GLES11.glEnable(GLES11.GL_LIGHT0);
-        GLES11.glEnable(GLES11.GL_DEPTH_TEST);
-        GLES11.glViewport(0, 0, ViewWidth, ViewHeight);
-        GLES11.glMatrixMode(GLES11.GL_PROJECTION);
-        GLES11.glLoadIdentity();
-        GLES11.glFrustumf
+        gl.glEnable(gl.GL_CULL_FACE);
+      /* gl.glEnable(gl.GL_MULTISAMPLE); */ /* doesn't seem to make any difference */
+        gl.glShadeModel(gl.GL_SMOOTH);
+        gl.glEnable(gl.GL_LIGHTING);
+        gl.glEnable(gl.GL_LIGHT0);
+        gl.glEnable(gl.GL_DEPTH_TEST);
+        gl.glViewport(0, 0, ViewWidth, ViewHeight);
+        gl.glMatrixMode(gl.GL_PROJECTION);
+        gl.glLoadIdentity();
+        gl.glFrustumf
           (
             /*l =*/ - (float)ViewWidth / ViewHeight,
             /*r =*/ (float)ViewWidth / ViewHeight,
@@ -273,56 +274,56 @@ public class VectorView
       /* draws all the satellite and compass arrows. Setup must already
         have been called on current GL context. */
       {
-        GLES11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        GLES11.glClear(GLES11.GL_COLOR_BUFFER_BIT | GLES11.GL_DEPTH_BUFFER_BIT);
-        GLES11.glMatrixMode(GLES11.GL_MODELVIEW);
-        GLES11.glLoadIdentity();
+        gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
+        gl.glMatrixMode(gl.GL_MODELVIEW);
+        gl.glLoadIdentity();
       /* Note that, by positioning the light _before_ doing all the
         rotate calls, its position is fixed relative to the display,
         not the arrows. */
-        GLES11.glLightfv
+        gl.glLightfv
           (
-            /*light =*/ GLES11.GL_LIGHT0,
-            /*pname =*/ GLES11.GL_POSITION,
+            /*light =*/ gl.GL_LIGHT0,
+            /*pname =*/ gl.GL_POSITION,
             /*params =*/ new float[] {0.0f, 2.0f, -2.0f, 1.0f},
             /*offset =*/ 0
           );
-        GLES11.glLightfv
+        gl.glLightfv
           (
-            /*light =*/ GLES11.GL_LIGHT0,
-            /*pname =*/ GLES11.GL_AMBIENT,
+            /*light =*/ gl.GL_LIGHT0,
+            /*pname =*/ gl.GL_AMBIENT,
             /*params =*/ new float[] {0.4f, 0.4f, 0.4f, 1.0f},
             /*offset =*/ 0
           );
-        GLES11.glLightfv
+        gl.glLightfv
           (
-            /*light =*/ GLES11.GL_LIGHT0,
-            /*pname =*/ GLES11.GL_SPECULAR,
+            /*light =*/ gl.GL_LIGHT0,
+            /*pname =*/ gl.GL_SPECULAR,
             /*params =*/ new float[] {0.7f, 0.7f, 0.7f, 1.0f},
             /*offset =*/ 0
           );
-        GLES11.glMaterialfv
+        gl.glMaterialfv
           (
-            /*face =*/ GLES11.GL_FRONT_AND_BACK,
-            /*pname =*/ GLES11.GL_AMBIENT,
+            /*face =*/ gl.GL_FRONT_AND_BACK,
+            /*pname =*/ gl.GL_AMBIENT,
             /*params =*/ new float[] {0.4f, 0.4f, 0.4f, 1.0f},
             /*offset =*/ 0
           );
-        GLES11.glTranslatef(0, 0, -3.0f);
-        GLES11.glScalef(2.0f, 2.0f, 2.0f);
-        GLES11.glFrontFace(GLES11.GL_CCW);
-        GLES11.glRotatef(GraphicsUseful.ToDegrees(OrientRoll), 0, 1, 0);
-        GLES11.glRotatef(GraphicsUseful.ToDegrees(OrientElev), 1, 0, 0);
-        GLES11.glRotatef(GraphicsUseful.ToDegrees(OrientAzi), 0, 0, 1);
+        gl.glTranslatef(0, 0, -3.0f);
+        gl.glScalef(2.0f, 2.0f, 2.0f);
+        gl.glFrontFace(gl.GL_CCW);
+        gl.glRotatef(GraphicsUseful.ToDegrees(OrientRoll), 0, 1, 0);
+        gl.glRotatef(GraphicsUseful.ToDegrees(OrientElev), 1, 0, 0);
+        gl.glRotatef(GraphicsUseful.ToDegrees(OrientAzi), 0, 0, 1);
         for (SatInfo ThisSat : Sats)
           {
-            GLES11.glPushMatrix();
-            GLES11.glRotatef(- GraphicsUseful.ToDegrees(ThisSat.Azimuth), 0, 0, 1);
-            GLES11.glRotatef(GraphicsUseful.ToDegrees(ThisSat.Elevation), 1, 0, 0);
-            GLES11.glMaterialfv
+            gl.glPushMatrix();
+            gl.glRotatef(- GraphicsUseful.ToDegrees(ThisSat.Azimuth), 0, 0, 1);
+            gl.glRotatef(GraphicsUseful.ToDegrees(ThisSat.Elevation), 1, 0, 0);
+            gl.glMaterialfv
               (
-                /*face =*/ GLES11.GL_FRONT_AND_BACK,
-                /*pname =*/ GLES11.GL_SPECULAR,
+                /*face =*/ gl.GL_FRONT_AND_BACK,
+                /*pname =*/ gl.GL_SPECULAR,
                 /*params =*/
                     ThisSat.Prn == FlashPrn ?
                         new float[] {0.81f, 0.08f, 0.93f, 1.0f}
@@ -331,12 +332,12 @@ public class VectorView
                 /*offset =*/ 0
               );
             SatArrow.Draw();
-            GLES11.glPopMatrix();
+            gl.glPopMatrix();
           } /*for*/
-        GLES11.glMaterialfv
+        gl.glMaterialfv
           (
-            /*face =*/ GLES11.GL_FRONT_AND_BACK,
-            /*pname =*/ GLES11.GL_SPECULAR,
+            /*face =*/ gl.GL_FRONT_AND_BACK,
+            /*pname =*/ gl.GL_SPECULAR,
             /*params =*/ new float[] {0.28f, 0.76f, 0.69f, 1.0f},
             /*offset =*/ 0
           );

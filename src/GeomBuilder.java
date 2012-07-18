@@ -3,7 +3,7 @@ package nz.gen.geek_central.GLUseful;
     Easy construction and application of buffers needed for
     OpenGL-ES drawing.
 
-    Copyright 2011 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    Copyright 2011, 2012 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.ByteOrder;
-import android.opengl.GLES11;
 
 public class GeomBuilder
   /*
@@ -38,6 +37,7 @@ public class GeomBuilder
     resulting geometry into a specified GL context.
   */
   {
+    static final android.opengl.GLES11 gl = new android.opengl.GLES11(); /* for easier references */
 
     public static class Vec3f
       /* 3D vectors/points */
@@ -243,30 +243,30 @@ public class GeomBuilder
           } /*Obj*/
 
         public void Draw()
-          /* actually renders the geometry into the specified GL context. */
+          /* actually renders the geometry into the current GL context. */
           {
-            GLES11.glEnableClientState(GLES11.GL_VERTEX_ARRAY);
-            GLES11.glVertexPointer(3, GLES11.GL_FIXED, 0, VertexBuffer);
+            gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
+            gl.glVertexPointer(3, gl.GL_FIXED, 0, VertexBuffer);
             if (NormalBuffer != null)
               {
-                GLES11.glEnableClientState(GLES11.GL_NORMAL_ARRAY);
-                GLES11.glNormalPointer(GLES11.GL_FIXED, 0, NormalBuffer);
+                gl.glEnableClientState(gl.GL_NORMAL_ARRAY);
+                gl.glNormalPointer(gl.GL_FIXED, 0, NormalBuffer);
               } /*if*/
             if (TexCoordBuffer != null)
               {
-                GLES11.glEnableClientState(GLES11.GL_TEXTURE_COORD_ARRAY);
-                GLES11.glTexCoordPointer(3, GLES11.GL_FIXED, 0, TexCoordBuffer);
+                gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                gl.glTexCoordPointer(3, gl.GL_FIXED, 0, TexCoordBuffer);
               } /*if*/
             if (ColorBuffer != null)
               {
-                GLES11.glEnableClientState(GLES11.GL_COLOR_ARRAY);
-                GLES11.glColorPointer(4, GLES11.GL_FIXED, 0, ColorBuffer);
+                gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+                gl.glColorPointer(4, gl.GL_FIXED, 0, ColorBuffer);
               } /*if*/
-            GLES11.glDrawElements(GLES11.GL_TRIANGLES, NrIndexes, GLES11.GL_UNSIGNED_SHORT, IndexBuffer);
-            GLES11.glDisableClientState(GLES11.GL_VERTEX_ARRAY);
-            GLES11.glDisableClientState(GLES11.GL_NORMAL_ARRAY);
-            GLES11.glDisableClientState(GLES11.GL_TEXTURE_COORD_ARRAY);
-            GLES11.glDisableClientState(GLES11.GL_COLOR_ARRAY);
+            gl.glDrawElements(gl.GL_TRIANGLES, NrIndexes, gl.GL_UNSIGNED_SHORT, IndexBuffer);
+            gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+            gl.glDisableClientState(gl.GL_NORMAL_ARRAY);
+            gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+            gl.glDisableClientState(gl.GL_COLOR_ARRAY);
           } /*Draw*/
 
       } /*Obj*/
