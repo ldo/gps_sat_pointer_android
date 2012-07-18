@@ -84,6 +84,7 @@ public class GeomBuilder
     private final ArrayList<Vec3f> PointTexCoords;
     private final ArrayList<Color> PointColors;
     private final ArrayList<Integer> Faces;
+    private Vec3f BoundMin, BoundMax;
 
     public GeomBuilder
       (
@@ -97,6 +98,8 @@ public class GeomBuilder
         PointTexCoords = GotTexCoords ? new ArrayList<Vec3f>() : null;
         PointColors = GotColors ? new ArrayList<Color>() : null;
         Faces = new ArrayList<Integer>();
+        BoundMin = null;
+        BoundMax = null;
       } /*GeomBuilder*/
 
     public int Add
@@ -135,6 +138,34 @@ public class GeomBuilder
           {
             PointColors.add(VertexColor);
           } /*if*/
+        if (BoundMin != null)
+          {
+            BoundMin =
+                new Vec3f
+                  (
+                    Math.min(BoundMin.x, Vertex.x),
+                    Math.min(BoundMin.y, Vertex.y),
+                    Math.min(BoundMin.z, Vertex.z)
+                  );
+          }
+        else
+          {
+            BoundMin = Vertex;
+          } /*if*/
+        if (BoundMax != null)
+          {
+            BoundMax =
+                new Vec3f
+                  (
+                    Math.max(BoundMax.x, Vertex.x),
+                    Math.max(BoundMax.y, Vertex.y),
+                    Math.max(BoundMax.z, Vertex.z)
+                  );
+          }
+        else
+          {
+            BoundMax = Vertex;
+          } /*if*/
         return
             Result;
       } /*Add*/
@@ -165,6 +196,19 @@ public class GeomBuilder
         AddTri(V4, V1, V3);
       } /*AddQuad*/
 
+    public void AddPoly
+      (
+        int[] V
+      )
+      /* Defines a polygonal face. Array elements are indices as previously
+        returned from calls to Add. */
+      {
+        for (int i = 1; i < V.length - 1; ++i)
+          {
+            AddTri(V[0], V[i], V[i + 1]);
+          } /*for*/
+      } /*AddPoly*/
+
     public static class Obj
       /* representation of complete object geometry. */
       {
@@ -173,7 +217,8 @@ public class GeomBuilder
         private final IntBuffer TexCoordBuffer;
         private final IntBuffer ColorBuffer;
         private final ShortBuffer IndexBuffer;
-        final int NrIndexes;
+        private final int NrIndexes;
+        public final Vec3f BoundMin, BoundMax;
 
         private Obj
           (
@@ -182,7 +227,9 @@ public class GeomBuilder
             IntBuffer TexCoordBuffer, /* optional */
             IntBuffer ColorBuffer, /* optional */
             ShortBuffer IndexBuffer,
-            int NrIndexes
+            int NrIndexes,
+            Vec3f BoundMin,
+            Vec3f BoundMax
           )
           {
             this.VertexBuffer = VertexBuffer;
@@ -191,6 +238,8 @@ public class GeomBuilder
             this.ColorBuffer = ColorBuffer;
             this.IndexBuffer = IndexBuffer;
             this.NrIndexes = NrIndexes;
+            this.BoundMin = BoundMin;
+            this.BoundMax = BoundMax;
           } /*Obj*/
 
         public void Draw()
@@ -225,6 +274,10 @@ public class GeomBuilder
     public Obj MakeObj()
       /* constructs and returns the final geometry ready for rendering. */
       {
+        if (Points.size() == 0)
+          {
+            throw new RuntimeException("GeomBuilder: empty object");
+          } /*if*/
         final int Fixed1 = 0x10000;
         final int[] Vertices = new int[Points.size() * 3];
         final int[] Normals = PointNormals != null ? new int[Points.size() * 3] : null;
@@ -336,7 +389,9 @@ public class GeomBuilder
                 TexCoordBuffer,
                 ColorBuffer,
                 IndexBuffer,
-                NrIndexes
+                NrIndexes,
+                BoundMin,
+                BoundMax
               );
       } /*MakeObj*/
 
