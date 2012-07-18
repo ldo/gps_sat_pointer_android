@@ -1,8 +1,14 @@
 package nz.gen.geek_central.GPSSatPointer;
 /*
-    functional 3D matrix operations
+    Functional 3D matrix operations. Matrix elements are in row-major order.
+    Vectors are treated as column vectors and premultiplied, i.e.
 
-    Copyright 2011 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    [x']   [m11 m12 m13 m14]   [x]
+    [y'] = [m21 m22 m23 m24] × [y]
+    [z']   [m31 m32 m33 m34]   [z]
+    [w']   [m41 m42 m43 m44]   [w]
+
+    Copyright 2011, 2012 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -451,10 +457,10 @@ public class Mat4f
         return
             new Mat4f
               (
-                1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f,
-                v.x, v.y, v.z, 1.0f
+                1.0f, 0.0f, 0.0f, v.x,
+                0.0f, 1.0f, 0.0f, v.y,
+                0.0f, 0.0f, 1.0f, v.z,
+                0.0f, 0.0f, 0.0f, 1.0f
               );
       } /*translation*/
 
@@ -482,7 +488,7 @@ public class Mat4f
       /* returns a matrix that will scale about the specified point by the specified vector. */
       {
         return
-            translation(origin.neg()).mul(scaling(v)).mul(translation(origin));
+            translation(origin).mul(scaling(v)).mul(translation(origin.neg()));
       } /*scaling*/
 
     public static final int AXIS_X = 0;
@@ -504,25 +510,25 @@ public class Mat4f
             m = new Mat4f
               (
                 1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, cos, sin, 0.0f,
-                0.0f, - sin, cos, 0.0f,
+                0.0f, cos, - sin, 0.0f,
+                0.0f, sin, cos, 0.0f,
                 0.0f, 0.0f, 0.0f, 1.0f
               );
         break;
         case AXIS_Y:
             m = new Mat4f
               (
-                cos, 0.0f, - sin, 0.0f,
+                cos, 0.0f, sin, 0.0f,
                 0.0f, 1.0f, 0.0f, 0.0f,
-                sin, 0.0f, cos, 0.0f,
+                - sin, 0.0f, cos, 0.0f,
                 0.0f, 0.0f, 0.0f, 1.0f
               );
         break;
         case AXIS_Z:
             m = new Mat4f
               (
-                cos, sin, 0.0f, 0.0f,
-                -sin, cos, 0.0f, 0.0f,
+                cos, - sin, 0.0f, 0.0f,
+                sin, cos, 0.0f, 0.0f,
                 0.0f, 0.0f, 1.0f, 0.0f,
                 0.0f, 0.0f, 0.0f, 1.0f
               );
@@ -543,7 +549,7 @@ public class Mat4f
       )
       {
         return
-            translation(origin.neg()).mul(rotation(axis, radians)).mul(translation(origin));
+            translation(origin).mul(rotation(axis, radians)).mul(translation(origin.neg()));
       } /*rotation*/
 
     public static Mat4f rotation
@@ -563,15 +569,15 @@ public class Mat4f
           );
           /* rotate within x-z plane about y to align with x-axis */
         return
-                rotation(AXIS_Z, - zangle)
+                rotation(AXIS_Z, zangle)
             .mul(
-                rotation(AXIS_Y, yangle)
+                rotation(AXIS_Y, - yangle)
             ).mul(
                 rotation(AXIS_X, radians)
             ).mul(
-                rotation(AXIS_Y, - yangle)
+                rotation(AXIS_Y, yangle)
             ).mul(
-                rotation(AXIS_Z, zangle)
+                rotation(AXIS_Z, - zangle)
             );
       } /*rotation*/
 
@@ -584,11 +590,11 @@ public class Mat4f
       /* generates a rotation about an arbitrary axis. */
       {
         return
-                translation(origin.neg())
+                translation(origin)
             .mul(
                 rotation(axis.sub(origin), radians))
             .mul(
-                translation(origin)
+                translation(origin.neg())
             );
       } /*rotation*/
 
@@ -613,10 +619,10 @@ public class Mat4f
         return
             new Vec3f
               (
-                v.x * m11 + v.y * m21 + v.z * m31 + v.w * m41,
-                v.x * m12 + v.y * m22 + v.z * m32 + v.w * m42,
-                v.x * m13 + v.y * m23 + v.z * m33 + v.w * m43,
-                v.x * m14 + v.y * m24 + v.z * m34 + v.w * m44
+                v.x * m11 + v.y * m12 + v.z * m13 + v.w * m14,
+                v.x * m21 + v.y * m22 + v.z * m23 + v.w * m24,
+                v.x * m31 + v.y * m32 + v.z * m33 + v.w * m34,
+                v.x * m41 + v.y * m42 + v.z * m43 + v.w * m44
               );
       } /*xform*/
 
@@ -644,9 +650,9 @@ public class Mat4f
         return
             new Vec3f
               (
-                v.x * m11 + v.y * m21 + v.z * m31,
-                v.x * m12 + v.y * m22 + v.z * m32,
-                v.x * m13 + v.y * m23 + v.z * m33
+                v.x * m11 + v.y * m12 + v.z * m13,
+                v.x * m21 + v.y * m22 + v.z * m23,
+                v.x * m31 + v.y * m32 + v.z * m33
               );
       } /*dxform*/
 
