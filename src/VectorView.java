@@ -116,14 +116,14 @@ public class VectorView extends android.opengl.GLSurfaceView
             Mat4f OrientMatrix
           )
           {
-            final Vec3f Where = OrientMatrix.xform(new Vec3f(0.0f, 1.0f, 0.0f)).mul(ViewRadius);
+            final Vec3f Where = ProjectionMatrix.mul(OrientMatrix).xform(new Vec3f(0.0f, 1.0f, 0.0f));
             Image.Draw
               (
-                /*Projection =*/ ProjectionMatrix,
-                /*Left =*/ (Where.x - Image.BitsWidth / 2.0f) / ViewRadius,
-                /*Bottom =*/ (Where.y - Image.BitsHeight / 2.0f) / ViewRadius,
-                /*Right =*/ (Where.x + Image.BitsWidth / 2.0f) / ViewRadius,
-                /*Top =*/ (Where.y + Image.BitsHeight / 2.0f) / ViewRadius,
+                /*Projection =*/ Mat4f.identity(),
+                /*Left =*/ Where.x / Where.w - Image.BitsWidth / 2.0f / ViewRadius,
+                /*Bottom =*/ Where.y / Where.w - Image.BitsHeight / 2.0f / ViewRadius,
+                /*Right =*/ Where.x / Where.w+ Image.BitsWidth / 2.0f / ViewRadius,
+                /*Top =*/ Where.y / Where.w + Image.BitsHeight / 2.0f / ViewRadius,
                 /*Depth =*/ 0.01f
               );
           } /*Draw*/
