@@ -115,6 +115,8 @@ public class VectorView extends android.opengl.GLSurfaceView
           (
             Mat4f OrientMatrix
           )
+          /* draws the label so its centre coincides with the tip of an arrow in the
+            specified orientation. */
           {
             final Vec3f Where = ProjectionMatrix.mul(OrientMatrix).xform(new Vec3f(0.0f, 1.0f, 0.0f));
             Image.Draw
@@ -472,35 +474,6 @@ public class VectorView extends android.opengl.GLSurfaceView
             ).mul(
                 Mat4f.rotation(Mat4f.AXIS_Z, OrientAzi)
             );
-        for (SatInfo ThisSat : Sats)
-          {
-            final Mat4f SatDirection =
-                    Orientation
-                .mul
-                    (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
-                .mul
-                    (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation));
-            gl.glEnable(gl.GL_DEPTH_TEST);
-            SatArrow.Draw
-              (
-                /*ProjectionMatrix =*/ ProjectionMatrix,
-                /*ModelViewMatrix =*/ SatDirection,
-                /*Uniforms =*/
-                    new GeomBuilder.ShaderVarVal[]
-                        {
-                            new GeomBuilder.ShaderVarVal
-                              (
-                                "arrow_color",
-                                ThisSat.Prn == FlashPrn ?
-                                    new float[]{0.81f, 0.08f, 0.93f}
-                                :
-                                    new float[]{0.93f, 0.87f, 0.04f}
-                              ),
-                        }
-              );
-            gl.glDisable(gl.GL_DEPTH_TEST);
-            SatLabels.get(ThisSat.Prn).Draw(SatDirection);
-          } /*for*/
         gl.glEnable(gl.GL_DEPTH_TEST);
         CompassArrow.Draw
           (
@@ -508,7 +481,46 @@ public class VectorView extends android.opengl.GLSurfaceView
             /*ModelViewMatrix =*/ Orientation,
             /*Uniforms =*/ null
           );
-        gl.glDisable(gl.GL_DEPTH_TEST);
+        for (boolean DoingLabels = false;;)
+          {
+            for (SatInfo ThisSat : Sats)
+              {
+                final Mat4f SatDirection =
+                        Orientation
+                    .mul
+                        (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
+                    .mul
+                        (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation));
+                if (DoingLabels)
+                  {
+                    SatLabels.get(ThisSat.Prn).Draw(SatDirection);
+                  }
+                else
+                  {
+                    SatArrow.Draw
+                      (
+                        /*ProjectionMatrix =*/ ProjectionMatrix,
+                        /*ModelViewMatrix =*/ SatDirection,
+                        /*Uniforms =*/
+                            new GeomBuilder.ShaderVarVal[]
+                                {
+                                    new GeomBuilder.ShaderVarVal
+                                      (
+                                        "arrow_color",
+                                        ThisSat.Prn == FlashPrn ?
+                                            new float[]{0.81f, 0.08f, 0.93f}
+                                        :
+                                            new float[]{0.93f, 0.87f, 0.04f}
+                                      ),
+                                }
+                      );
+                  } /*if*/
+              } /*for*/
+            if (DoingLabels)
+                break;
+            gl.glDisable(gl.GL_DEPTH_TEST); /* all labels go on top */
+            DoingLabels = true;
+          } /*for*/
         CompassLabel.Draw(Orientation);
       } /*Draw*/
 
