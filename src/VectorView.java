@@ -122,7 +122,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                 /*Projection =*/ Mat4f.identity(),
                 /*Left =*/ Where.x / Where.w - Image.BitsWidth / 2.0f / ViewRadius,
                 /*Bottom =*/ Where.y / Where.w - Image.BitsHeight / 2.0f / ViewRadius,
-                /*Right =*/ Where.x / Where.w+ Image.BitsWidth / 2.0f / ViewRadius,
+                /*Right =*/ Where.x / Where.w + Image.BitsWidth / 2.0f / ViewRadius,
                 /*Top =*/ Where.y / Where.w + Image.BitsHeight / 2.0f / ViewRadius,
                 /*Depth =*/ 0.01f
               );
