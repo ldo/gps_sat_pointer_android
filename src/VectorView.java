@@ -95,16 +95,6 @@ public class VectorView extends android.opengl.GLSurfaceView
                 Math.round((TextBounds.right - TextBounds.left) * (1.0f + Slop)),
                 Math.round((TextBounds.bottom - TextBounds.top) * (1.0f + Slop))
               );
-            System.err.printf
-              (
-                "Bounds of label “%s” at size %.2f = (%d, %d, %d, %d), bits bounds = (%d, %d), translate to (%.2f, %.2f)\n",
-                Label,
-                LabelPaint.getTextSize(),
-                TextBounds.left, TextBounds.top, TextBounds.right, TextBounds.bottom,
-                Image.BitsWidth, Image.BitsHeight,
-                (TextBounds.right - TextBounds.left) * Slop * 0.5f - TextBounds.left,
-                (TextBounds.bottom - TextBounds.top) * Slop * 0.5f - TextBounds.top
-              ); /* debug */
               {
                 final android.graphics.Canvas g = Image.Draw;
                 g.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
