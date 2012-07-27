@@ -123,16 +123,17 @@ public class VectorView extends android.opengl.GLSurfaceView
 
         public void Draw
           (
-            android.graphics.PointF Where /* (0, 0) is at centre, range is ±ViewRadius */
+            Mat4f OrientMatrix
           )
           {
+            final Vec3f Where = ProjectionMatrix.mul(OrientMatrix).xform(new Vec3f(0.0f, ViewRadius, 0.0f));
             Image.Draw
               (
                 /*Projection =*/ Mat4f.identity(),
                 /*Left =*/ (Where.x - Image.BitsWidth / 2.0f) / ViewRadius,
-                /*Bottom =*/ (- Where.y - Image.BitsHeight / 2.0f) / ViewRadius,
+                /*Bottom =*/ (Where.y - Image.BitsHeight / 2.0f) / ViewRadius,
                 /*Right =*/ (Where.x + Image.BitsWidth / 2.0f) / ViewRadius,
-                /*Top =*/ (- Where.y + Image.BitsHeight / 2.0f) / ViewRadius,
+                /*Top =*/ (Where.y + Image.BitsHeight / 2.0f) / ViewRadius,
                 /*Depth =*/ 0.01f
               );
           } /*Draw*/
@@ -153,7 +154,6 @@ public class VectorView extends android.opengl.GLSurfaceView
         viewed from bottom, -ve is clockwise, until it reaches
         ±90° when it its starts decreasing in magnitude again, so
         0° is when phone is horizontal either face-up or face-down */
-    Mat4f OrientMatrix = Mat4f.identity();
     SatInfo[] Sats = {};
     int FlashPrn = -1;
 
@@ -209,7 +209,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                           )
                           {
                             return
-                                Points[PointIndex];
+                                Points[PointIndex].mul(2.0f);
                           } /*Get*/
                       } /*VertexFunc*/,
                 /*NrPoints = */ Points.length,
@@ -299,13 +299,6 @@ public class VectorView extends android.opengl.GLSurfaceView
         OrientAzi = GraphicsUseful.ToRadians(Datum[0]);
         OrientElev = GraphicsUseful.ToRadians(Datum[1]);
         OrientRoll = GraphicsUseful.ToRadians(Datum[2]);
-        OrientMatrix =
-                Mat4f.rotation(Mat4f.AXIS_Z, - OrientAzi)
-            .mul(
-                Mat4f.rotation(Mat4f.AXIS_X, - OrientElev)
-            ).mul(
-                Mat4f.rotation(Mat4f.AXIS_Y, OrientRoll)
-            );
         requestRender();
       } /*SetOrientation*/
 
@@ -385,48 +378,6 @@ public class VectorView extends android.opengl.GLSurfaceView
             requestRender();
           } /*if*/
       } /*SetFlashPrn*/
-
-    public Vec3f OurDirection
-      (
-        float Azimuth,
-        float Elevation
-      )
-     /* returns direction vector corresponding to Azimuth and Elevation in phone coordinates. */
-      {
-        final float AziCos = FloatMath.cos(Azimuth);
-        final float AziSin = FloatMath.sin(Azimuth);
-        final float ElevCos = FloatMath.cos(Elevation);
-        final float ElevSin = FloatMath.sin(Elevation);
-        return 
-            OrientMatrix.xform
-              (
-                new Vec3f
-                  (
-                      AziSin * ElevCos,
-                      - AziCos * ElevCos,
-                      ElevSin
-                  )
-              );
-      } /*OurDirection*/
-
-    public android.graphics.PointF PointAt
-      (
-        float Azimuth,
-        float Elevation
-      )
-      /* returns the coordinates where the tip of the arrow should lie. */
-      {
-        final Vec3f D = OurDirection(Azimuth, Elevation);
-        final float[] Result = {0.0f, + ViewRadius};
-        final android.graphics.Matrix Orient = new android.graphics.Matrix();
-        Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y));
-          /* perspective foreshortening factor */
-          /* fixme: perhaps replace with transformation through actual OpenGL matrices */
-        Orient.postRotate(GraphicsUseful.ToDegrees((float)Math.atan2(- D.x, D.y)));
-        Orient.mapPoints(Result);
-        return
-            new android.graphics.PointF(Result[0], Result[1]);
-      } /*PointAt*/
 
     public void Setup
       (
@@ -530,20 +481,19 @@ public class VectorView extends android.opengl.GLSurfaceView
                 Mat4f.rotation(Mat4f.AXIS_X, OrientElev)
             ).mul(
                 Mat4f.rotation(Mat4f.AXIS_Z, OrientAzi)
-            ).mul(
-                Mat4f.scaling(2.0f, 2.0f, 2.0f)
             );
         for (SatInfo ThisSat : Sats)
           {
+            final Mat4f SatDirection =
+                    Orientation
+                .mul
+                    (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
+                .mul
+                    (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation));
             SatArrow.Draw
               (
                 /*ProjectionMatrix =*/ ProjectionMatrix,
-                /*ModelViewMatrix =*/
-                        Orientation
-                    .mul
-                        (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
-                    .mul
-                        (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation)),
+                /*ModelViewMatrix =*/ SatDirection,
                 /*Uniforms =*/
                     new GeomBuilder.ShaderVarVal[]
                         {
@@ -557,6 +507,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                               ),
                         }
               );
+            SatLabels.get(ThisSat.Prn).Draw(SatDirection);
           } /*for*/
         CompassArrow.Draw
           (
@@ -564,15 +515,7 @@ public class VectorView extends android.opengl.GLSurfaceView
             /*ModelViewMatrix =*/ Orientation,
             /*Uniforms =*/ null
           );
-      /* now draw text labels on top */
-        CompassLabel.Draw(PointAt(0.0f, 0.0f));
-        for (SatInfo ThisSat : Sats)
-          {
-            SatLabels.get(ThisSat.Prn).Draw
-              (
-                PointAt(ThisSat.Azimuth, ThisSat.Elevation)
-              );
-          } /*for*/
+        CompassLabel.Draw(Orientation);
       } /*Draw*/
 
     private class VectorViewRenderer implements Renderer
