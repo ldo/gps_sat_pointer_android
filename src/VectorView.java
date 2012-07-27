@@ -116,10 +116,10 @@ public class VectorView extends android.opengl.GLSurfaceView
             Mat4f OrientMatrix
           )
           {
-            final Vec3f Where = ProjectionMatrix.mul(OrientMatrix).xform(new Vec3f(0.0f, ViewRadius, 0.0f));
+            final Vec3f Where = OrientMatrix.xform(new Vec3f(0.0f, 1.0f, 0.0f)).mul(ViewRadius);
             Image.Draw
               (
-                /*Projection =*/ Mat4f.identity(),
+                /*Projection =*/ ProjectionMatrix,
                 /*Left =*/ (Where.x - Image.BitsWidth / 2.0f) / ViewRadius,
                 /*Bottom =*/ (Where.y - Image.BitsHeight / 2.0f) / ViewRadius,
                 /*Right =*/ (Where.x + Image.BitsWidth / 2.0f) / ViewRadius,
@@ -199,7 +199,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                           )
                           {
                             return
-                                Points[PointIndex].mul(2.0f);
+                                Points[PointIndex];
                           } /*Get*/
                       } /*VertexFunc*/,
                 /*NrPoints = */ Points.length,
@@ -398,20 +398,19 @@ public class VectorView extends android.opengl.GLSurfaceView
             Background = null;
           } /*if*/
         gl.glEnable(gl.GL_CULL_FACE);
-        gl.glEnable(gl.GL_DEPTH_TEST);
         gl.glViewport(0, 0, Math.round(2.0f * ViewRadius), Math.round(2.0f * ViewRadius));
         ProjectionMatrix =
                 Mat4f.frustum
                   (
-                    /*L =*/ - (float)ViewWidth / ViewHeight,
-                    /*R =*/ (float)ViewWidth / ViewHeight,
-                    /*B =*/ -1.0f,
-                    /*T =*/ 1.0f,
-                    /*N =*/ 1.0f,
-                    /*F =*/ 10.0f
+                    /*L =*/ -0.1f,
+                    /*R =*/ 0.1f,
+                    /*B =*/ -0.1f,
+                    /*T =*/ 0.1f,
+                    /*N =*/ 0.1f,
+                    /*F =*/ 3.1f
                   )
             .mul(
-                Mat4f.translation(new Vec3f(0.0f, 0.0f, -3.0f))
+                Mat4f.translation(new Vec3f(0.0f, 0.0f, -1.6f))
             );
       } /*Setup*/
 
@@ -455,6 +454,7 @@ public class VectorView extends android.opengl.GLSurfaceView
           } /*if*/
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
+        gl.glDisable(gl.GL_DEPTH_TEST);
         Background.Draw
           (
             /*Projection =*/ Mat4f.identity(),
@@ -480,6 +480,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                     (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
                 .mul
                     (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation));
+            gl.glEnable(gl.GL_DEPTH_TEST);
             SatArrow.Draw
               (
                 /*ProjectionMatrix =*/ ProjectionMatrix,
@@ -497,14 +498,17 @@ public class VectorView extends android.opengl.GLSurfaceView
                               ),
                         }
               );
+            gl.glDisable(gl.GL_DEPTH_TEST);
             SatLabels.get(ThisSat.Prn).Draw(SatDirection);
           } /*for*/
+        gl.glEnable(gl.GL_DEPTH_TEST);
         CompassArrow.Draw
           (
             /*ProjectionMatrix =*/ ProjectionMatrix,
             /*ModelViewMatrix =*/ Orientation,
             /*Uniforms =*/ null
           );
+        gl.glDisable(gl.GL_DEPTH_TEST);
         CompassLabel.Draw(Orientation);
       } /*Draw*/
 
