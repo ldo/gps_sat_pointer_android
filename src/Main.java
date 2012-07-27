@@ -17,16 +17,10 @@ package nz.gen.geek_central.GPSSatPointer;
     the License.
 */
 
-import java.nio.ByteBuffer;
 import android.location.Location;
 import android.location.LocationManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.graphics.Matrix;
-import android.opengl.GLES11;
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLDisplay;
-import nz.gen.geek_central.GLUseful.EGLUseful;
 
 class TimeUseful
   {
@@ -121,13 +115,12 @@ public class Main extends android.app.Activity
       } /*SatItem*/
 
     LocationManager Locator;
+    VectorView Vectors;
     android.widget.ListView SatsListView;
     android.widget.ArrayAdapter<SatItem> SatsList;
     android.widget.TextView Message1, Message2;
     android.os.Handler RunBG;
-    android.view.SurfaceView Graphical;
     CommonListener Listen;
-    boolean Active = false, SurfaceExists = false;
 
     SensorManager SensorMan;
     Sensor OrientationSensor;
@@ -143,81 +136,18 @@ public class Main extends android.app.Activity
         implements
             android.location.GpsStatus.Listener,
             android.location.LocationListener,
-            android.hardware.SensorEventListener,
-            android.view.SurfaceHolder.Callback
+            android.hardware.SensorEventListener
       {
-        private final static boolean UsePBuffers = false;
-          /* off-screen PBuffers give same rendering speed and quality as
-            on-screen rendering. Unfortunately the only way to get back those
-            pixels is via glReadPixels, which for some reason is very slow.
-            Using EGL "native pixmaps" (Bitmap objects on Android) seems
-            to come with EGL_SLOW_CONFIG attached as a caveat to all the
-            appropriate configs, and also you only get 16-bit instead of 32-bit
-            quality (and no alpha), yet avoiding the copy-back step leads
-            to a much greater frame rate overall. */
-        private final EGLDisplay Display;
-        private EGLUseful.SurfaceContext GLContext;
-        private ByteBuffer GLPixels;
-        private android.graphics.Bitmap GLBits;
-        private final VectorView Vectors;
-        private int Rotation;
-        private Matrix ArrowsTransform;
-        float DisplayRadius;
-        final android.graphics.Paint TextPaint, BackgroundPaint, ArrowsPaint;
         android.os.Handler RunTask;
         Runnable NextUnflash = null;
-        private long LastUpdate = 0, LastDrawTime = 0;
 
         public CommonListener()
           {
-            Display = EGLUseful.NewDisplay();
-            Vectors = new VectorView();
             RunTask = new android.os.Handler();
-            TextPaint = GraphicsUseful.FillWithColor(0xff887f04);
-            TextPaint.setTextSize(28.0f);
-            TextPaint.setTextAlign(android.graphics.Paint.Align.CENTER);
-            TextPaint.setAntiAlias(true);
-            BackgroundPaint = GraphicsUseful.FillWithColor(0xff0a6d01);
-            if (true/*UsePBuffers*/)
-              {
-                ArrowsPaint = null;
-              }
-            else
-              {
-              /* try to do overlaying this way in lieu of alpha, but it slows things down */
-                ArrowsPaint = new android.graphics.Paint();
-                ArrowsPaint.setStyle(android.graphics.Paint.Style.FILL);
-                ArrowsPaint.setAntiAlias(true);
-                ArrowsPaint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.LIGHTEN));
-              } /*if*/
           } /*CommonListener*/
 
         public void Start()
           {
-            Rotation = (5 - Main.this.getWindowManager().getDefaultDisplay().getOrientation()) % 4;
-            DisplayRadius = (float)Math.min(Graphical.getWidth(), Graphical.getHeight()) / 2.0f;
-            AllocateGL();
-            ArrowsTransform = new Matrix();
-            if (UsePBuffers)
-              {
-                ArrowsTransform.preScale
-                  (
-                    1, -1,
-                    0, GLBits.getHeight() / 2.0f
-                  );
-                  /* Y-axis goes up for OpenGL, down for 2D Canvas */
-              } /*if*/
-            ArrowsTransform.postRotate
-              (
-                (Rotation - 1) * 90.0f,
-                GLBits.getWidth() / 2.0f,
-                GLBits.getHeight() / 2.0f
-              );
-            ArrowsTransform.postTranslate
-              (
-                -DisplayRadius,
-                -DisplayRadius
-              );
             Locator.addGpsStatusListener(this);
             Locator.requestLocationUpdates
               (
@@ -246,114 +176,12 @@ public class Main extends android.app.Activity
               } /*if*/
             Locator.removeGpsStatusListener(this);
             Locator.removeUpdates(this);
-            ReleaseGL();
           } /*Stop*/
 
         public void Finish()
           {
             Stop();
-            EGLUseful.EGL.eglTerminate(Display);
           } /*Finish*/
-
-        private void AllocateGL()
-          {
-            final int GLSize = (int)(2.0f * DisplayRadius);
-            if (UsePBuffers)
-              {
-                GLContext = EGLUseful.SurfaceContext.CreatePbuffer
-                  (
-                    /*ForDisplay =*/ Display,
-                    /*TryConfigs =*/
-                        EGLUseful.GetCompatConfigs
-                          (
-                            /*ForDisplay =*/ Display,
-                            /*MatchingAttribs =*/
-                                new int[]
-                                    {
-                                        EGL10.EGL_RED_SIZE, 8,
-                                        EGL10.EGL_GREEN_SIZE, 8,
-                                        EGL10.EGL_BLUE_SIZE, 8,
-                                        EGL10.EGL_ALPHA_SIZE, 8,
-                                        EGL10.EGL_DEPTH_SIZE, 16,
-                                        EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-                                        EGL10.EGL_CONFIG_CAVEAT, EGL10.EGL_NONE,
-                                        EGL10.EGL_NONE /* marks end of list */
-                                    }
-                          ),
-                    /*Width =*/ GLSize,
-                    /*Height =*/ GLSize,
-                    /*ExactSize =*/ true,
-                    /*ShareContext =*/ null
-                  );
-              }
-            else
-              {
-              /* unfortunately, while your hardware may list ARGB_8888-compatible
-                configs among those available, trying to use them seems to return
-                an EGL_BAD_MATCH error */
-                GLBits = android.graphics.Bitmap.createBitmap
-                  (
-                    /*width =*/ GLSize,
-                    /*height =*/ GLSize,
-                    /*config =*/ android.graphics.Bitmap.Config.RGB_565
-                  );
-                GLContext = EGLUseful.SurfaceContext.CreateBitmap
-                  (
-                    /*ForDisplay =*/ Display,
-                    /*TryConfigs =*/
-                        EGLUseful.GetCompatConfigs
-                          (
-                            /*ForDisplay =*/ Display,
-                            /*MatchingAttribs =*/
-                                new int[]
-                                    {
-                                        EGL10.EGL_RED_SIZE, 5,
-                                        EGL10.EGL_GREEN_SIZE, 6,
-                                        EGL10.EGL_BLUE_SIZE, 5,
-                                        EGL10.EGL_ALPHA_SIZE, 0,
-                                        EGL10.EGL_DEPTH_SIZE, 16,
-                                        EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PIXMAP_BIT,
-                                      /* no point checking EGL_CONFIG_CAVEAT, I know they'll
-                                        all be EGL_SLOW_CONFIG */
-                                        EGL10.EGL_NONE /* marks end of list */
-                                    }
-                          ),
-                    /*ForBitmap =*/ GLBits,
-                    /*ShareContext =*/ null
-                  );
-              } /*if*/
-            GLContext.SetCurrent();
-            Vectors.Setup(GLSize, GLSize);
-            GLContext.ClearCurrent();
-            if (UsePBuffers)
-              {
-                GLPixels = ByteBuffer.allocateDirect
-                  (
-                    GLSize * GLSize * 4
-                  ).order(java.nio.ByteOrder.nativeOrder());
-                GLBits = android.graphics.Bitmap.createBitmap
-                  (
-                    /*width =*/ GLSize,
-                    /*height =*/ GLSize,
-                    /*config =*/ android.graphics.Bitmap.Config.ARGB_8888
-                  );
-              } /*if*/
-          } /*AllocateGL*/
-
-        private void ReleaseGL()
-          {
-            if (GLContext != null)
-              {
-                GLContext.Release();
-                GLContext = null;
-              } /*if*/
-            if (GLBits != null)
-              {
-                GLBits.recycle();
-                GLBits = null;
-              } /*if*/
-            GLPixels = null;
-          } /*ReleaseGL*/
 
         public void SetSats
           (
@@ -362,7 +190,6 @@ public class Main extends android.app.Activity
           /* specifies a new set of satellite data to display. */
           {
             Vectors.SetSats(Sats);
-            Draw();
           } /*SetSats*/
 
         class FlashResetter implements Runnable
@@ -378,8 +205,7 @@ public class Main extends android.app.Activity
               {
                 if (!DidRun)
                   {
-                    Vectors.FlashPrn = -1; /* clear highlight */
-                    Draw();
+                    Vectors.SetFlashPrn(-1); /* clear highlight */
                     DidRun = true;
                   } /*if*/
               } /*run*/
@@ -398,106 +224,10 @@ public class Main extends android.app.Activity
                 NextUnflash.run();
                 NextUnflash = null;
               } /*if*/
-            Vectors.FlashPrn = Prn;
+            Vectors.SetFlashPrn(Prn);
             NextUnflash = new FlashResetter();
             RunTask.postDelayed(NextUnflash, 500);
-            Draw();
           } /*FlashSat*/
-
-        private void Draw()
-          /* (re)draws the complete composited display. */
-          {
-            final long Now = System.currentTimeMillis();
-            if (Now - LastUpdate >= (long)(LastDrawTime * 2.0f))
-              /* throttle redraws to reduce impact on UI responsiveness */
-              {
-                final android.graphics.Canvas Display = Graphical.getHolder().lockCanvas();
-                if (Display != null)
-                  {
-                    Display.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
-                      /* initialize all pixels to fully transparent */
-                    Display.save();
-                    Display.translate(DisplayRadius, DisplayRadius);
-                    Display.drawArc /* background */
-                      (
-                        /*oval =*/ new android.graphics.RectF(-DisplayRadius, -DisplayRadius, DisplayRadius, DisplayRadius),
-                        /*startAngle =*/ 0.0f,
-                        /*sweepAngle =*/ 360.0f,
-                        /*useCenter =*/ false,
-                        /*paint =*/ BackgroundPaint
-                      );
-                    if (GLContext != null)
-                      {
-                        GLContext.SetCurrent();
-                        Vectors.Draw();
-                          { /* debug */
-                            final int EGLError = EGLUseful.EGL.eglGetError();
-                            if (EGLError != EGL10.EGL_SUCCESS)
-                              {
-                                System.err.printf
-                                  (
-                                    "GPSSatPointer.Main EGL error 0x%04x\n", EGLError
-                                  );
-                              } /*if*/
-                          }
-                        GLES11.glFinish();
-                        if (UsePBuffers)
-                          {
-                            GLES11.glReadPixels
-                              (
-                                /*x =*/ 0,
-                                /*y =*/ 0,
-                                /*width =*/ GLBits.getWidth(),
-                                /*height =*/ GLBits.getHeight(),
-                                /*format =*/ GLES11.GL_RGBA,
-                                /*type =*/ GLES11.GL_UNSIGNED_BYTE,
-                                /*pixels =*/ GLPixels
-                              );
-                            GLContext.ClearCurrent();
-                            GLBits.copyPixelsFromBuffer(GLPixels);
-                          }
-                        else
-                          {
-                            GLContext.ClearCurrent();
-                          } /*if*/
-                        Display.drawBitmap(GLBits, ArrowsTransform, ArrowsPaint);
-                      } /*if*/
-                  /* now draw text labels on top */
-                    GraphicsUseful.DrawCenteredText
-                      (
-                        /*Draw =*/ Display,
-                        /*TheText =*/ "N",
-                        /*Where =*/ Vectors.PointAt(0.0f, 0.0f, DisplayRadius),
-                        /*UsePaint =*/ TextPaint
-                      );
-                    for (VectorView.SatInfo ThisSat : Vectors.Sats)
-                      {
-                        GraphicsUseful.DrawCenteredText
-                          (
-                            /*Draw =*/ Display,
-                            /*TheText =*/ String.format("%d", ThisSat.Prn),
-                            /*Where =*/ Vectors.PointAt(ThisSat.Azimuth, ThisSat.Elevation, DisplayRadius),
-                            /*UsePaint =*/ TextPaint
-                          );
-                      } /*for*/
-                    LastDrawTime = System.currentTimeMillis() - Now;
-                    GraphicsUseful.DrawCenteredText
-                      (
-                        /*Draw =*/ Display,
-                        /*TheText =*/ String.format("%dms@%.2ffps", LastDrawTime, 1000.0 / (Now - LastUpdate)),
-                        /*Where =*/ new android.graphics.PointF(0.0f, DisplayRadius * 0.9f),
-                        /*UsePaint =*/ TextPaint
-                      );
-                    Display.restore();
-                    LastUpdate = Now;
-                    Graphical.getHolder().unlockCanvasAndPost(Display);
-                  }
-                else
-                  {
-                    System.err.println("Graphical surface not ready");
-                  } /*if*/
-              } /*if*/
-          } /*Draw*/
 
       /* LocationListener methods */
         public void onLocationChanged
@@ -572,45 +302,7 @@ public class Main extends android.app.Activity
           )
           {
             Vectors.SetOrientation(Event.values);
-            Draw();
           } /*onSensorChanged*/
-
-      /* SurfaceHolder.Callback methods */
-        public void surfaceChanged
-          (
-            android.view.SurfaceHolder TheHolder,
-            int Format,
-            int Width,
-            int Height
-          )
-          {
-            System.err.println("GPSSatPointer.Main surfaceChanged"); /* debug */
-            Stop();
-            SurfaceExists = true;
-            if (Active)
-              {
-                Start();
-              } /*if*/
-          } /*surfaceChanged*/
-
-        public void surfaceCreated
-          (
-            android.view.SurfaceHolder TheHolder
-          )
-          {
-          /* do everything in surfaceChanged */
-            System.err.println("GPSSatPointer.Main surfaceCreated"); /* debug */
-          } /*surfaceCreated*/
-
-        public void surfaceDestroyed
-          (
-            android.view.SurfaceHolder TheHolder
-          )
-          {
-            SurfaceExists = false;
-            Stop();
-            System.err.println("GPSSatPointer.Main surfaceDestroyed"); /* debug */
-          } /*surfaceDestroyed*/
 
       } /*CommonListener*/
 
@@ -811,6 +503,8 @@ public class Main extends android.app.Activity
       {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        Vectors = (VectorView)findViewById(R.id.vector_view);
+        Vectors.Rotation = getWindowManager().getDefaultDisplay().getRotation();
         SatsListView = (android.widget.ListView)findViewById(R.id.sats_list);
         SatsList = new android.widget.ArrayAdapter<SatItem>
           (
@@ -820,7 +514,6 @@ public class Main extends android.app.Activity
         SatsListView.setAdapter(SatsList);
         Message1 = (android.widget.TextView)findViewById(R.id.message1);
         Message2 = (android.widget.TextView)findViewById(R.id.message2);
-        Graphical = (android.view.SurfaceView)findViewById(R.id.vector_view);
         Listen = new CommonListener();
         SatsListView.setOnItemClickListener
           (
@@ -905,7 +598,6 @@ public class Main extends android.app.Activity
         UpdateMessage();
         RunBG = new android.os.Handler();
         QueueUpdate();
-        Graphical.getHolder().addCallback(Listen);
       /* explicitly register broadcast receiver here rather than in manifest,
         because it cannot return any meaningful data if app is not running */
         TimeOffsetResponder = new GetTimeOffset();
@@ -927,8 +619,8 @@ public class Main extends android.app.Activity
     @Override
     public void onPause()
       {
+        Vectors.onPause();
         Listen.Stop();
-        Active = false;
         super.onPause();
       } /*onPause*/
 
@@ -936,11 +628,8 @@ public class Main extends android.app.Activity
     public void onResume()
       {
         super.onResume();
-        Active = true;
-        if (SurfaceExists)
-          {
-            Listen.Start();
-          } /*if*/
+        Listen.Start();
+        Vectors.onResume();
       } /*onResume*/
 
   } /*Main*/

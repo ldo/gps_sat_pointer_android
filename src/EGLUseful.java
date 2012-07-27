@@ -28,6 +28,8 @@ public class EGLUseful
   {
     public static final EGL10 EGL = GetEGL(); /* use this EGL10 instance for making EGL calls */
 
+    public static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+
     public static class EGLException extends RuntimeException
       /* indicates a problem making an EGL call. */
       {
@@ -265,7 +267,12 @@ public class EGLUseful
                         /*display =*/ ForDisplay,
                         /*config =*/ TryConfigs[i],
                         /*share_context =*/ ShareContext == null ? EGL10.EGL_NO_CONTEXT : ShareContext,
-                        /*attrib_list =*/ null
+                        /*attrib_list =*/
+                            new int[]
+                                {
+                                    EGL_CONTEXT_CLIENT_VERSION, 2,
+                                    EGL10.EGL_NONE /* marks end of list */
+                                }
                       );
                     if (UseContext == EGL10.EGL_NO_CONTEXT)
                       {

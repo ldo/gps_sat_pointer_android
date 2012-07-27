@@ -1,12 +1,25 @@
-package nz.gen.geek_central.GPSSatPointer;
+package nz.gen.geek_central.GLUseful;
 /*
     Functional 3D matrix operations. Matrix elements are in row-major order.
     Vectors are treated as column vectors and premultiplied, i.e.
 
-    [x']   [m11 m12 m13 m14]   [x]
-    [y'] = [m21 m22 m23 m24] × [y]
-    [z']   [m31 m32 m33 m34]   [z]
-    [w']   [m41 m42 m43 m44]   [w]
+        [x']   [m11 m12 m13 m14]   [x]
+        [y'] = [m21 m22 m23 m24] × [y]
+        [z']   [m31 m32 m33 m34]   [z]
+        [w']   [m41 m42 m43 m44]   [w]
+
+    Q: Why not use the android.opengl.Matrix class?
+    A: Because that is procedural (updates state in an existing
+       object), this is functional (computes values from
+       expressions). The procedural approach requires you to perform a
+       sequence of calls on intermediate variables to set up a complex
+       transformation, whereas the functional approach allows you to
+       write it as a single expression, closer to the way it is
+       formulated mathematically. For an example in this source file,
+       see below how general rotation about an arbitrary axis is
+       composed out of a sequence of simpler rotation components.
+    Q: But doesn't that involve a whole lot of extra heap allocations?
+    A: Isn't that the point of using Java?
 
     Copyright 2011, 2012 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
@@ -460,6 +473,24 @@ public class Mat4f
                 1.0f, 0.0f, 0.0f, v.x,
                 0.0f, 1.0f, 0.0f, v.y,
                 0.0f, 0.0f, 1.0f, v.z,
+                0.0f, 0.0f, 0.0f, v.w
+              );
+      } /*translation*/
+
+    public static Mat4f translation
+      (
+        float dx,
+        float dy,
+        float dz
+      )
+      /* returns a matrix that will translate by the specified amounts. */
+      {
+        return
+            new Mat4f
+              (
+                1.0f, 0.0f, 0.0f, dz,
+                0.0f, 1.0f, 0.0f, dy,
+                0.0f, 0.0f, 1.0f, dz,
                 0.0f, 0.0f, 0.0f, 1.0f
               );
       } /*translation*/
@@ -477,6 +508,24 @@ public class Mat4f
                 0.0f, v.y, 0.0f, 0.0f,
                 0.0f, 0.0f, v.z, 0.0f,
                 0.0f, 0.0f, 0.0f, v.w
+              );
+      } /*scaling*/
+
+    public static Mat4f scaling
+      (
+        float sx,
+        float sy,
+        float sz
+      )
+      /* returns a matrix that will scale about the origin by the specified factors. */
+      {
+        return
+            new Mat4f
+              (
+                sx, 0.0f, 0.0f, 0.0f,
+                0.0f, sy, 0.0f, 0.0f,
+                0.0f, 0.0f, sz, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f
               );
       } /*scaling*/
 
@@ -609,6 +658,69 @@ public class Mat4f
             rotation(src.cross(dst).unit(), (float)Math.acos(src.unit().dot(dst.unit())));
               /* no FloatMath.acos */
       } /*rotate_align*/
+
+    public static Mat4f frustum
+      (
+        float L,
+        float R,
+        float B,
+        float T,
+        float N,
+        float F
+      )
+      {
+        return
+            new Mat4f
+              (
+                2 * N / (R - L), 0.0f, (R + L) / (R - L), 0.0f,
+                0.0f, 2 * N / (T - B), (T + B) / (T - B), 0.0f,
+                0.0f, 0.0f, - (F + N) / (F - N), - 2 * F * N / (F - N),
+                0.0f, 0.0f, -1.0f, 0.0f
+              );
+      } /*frustum*/
+
+    public static Mat4f ortho
+      (
+        float L,
+        float R,
+        float B,
+        float T,
+        float N,
+        float F
+      )
+      {
+        return
+            new Mat4f
+              (
+                2 / (R - L), 0.0f, 0.0f, - (R + L) / (R - L),
+                0.0f, 2 / (T - B), 0.0f, - (T + B) / (T - B),
+                0.0f, 0.0f, -2 / (F - N), - (F + N) / (F - N),
+                0.0f, 0.0f, 0.0f, 1.0f
+              );
+      } /*ortho*/
+
+    public static Mat4f map_cuboid
+      (
+        Vec3f src_lo,
+        Vec3f src_hi,
+        Vec3f dst_lo,
+        Vec3f dst_hi
+      )
+      /* returns a matrix that maps the axis-aligned cuboid defined by
+        opposite corners src_lo and src_hi to the one with opposite
+        corners dst_lo and dst_hi. */
+      {
+        return
+            (
+                translation(dst_lo)
+            ).mul(
+                scaling(dst_hi.sub(dst_lo))
+            ).mul(
+                scaling(src_hi.sub(src_lo).recip())
+            ).mul(
+                translation(src_lo.neg())
+            );
+      } /*map_cuboid*/
 
     public Vec3f xform
       (

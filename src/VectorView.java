@@ -1,6 +1,6 @@
 package nz.gen.geek_central.GPSSatPointer;
 /*
-    Graphical display of directional arrows.
+    Graphical display of directional arrows with labels.
 
     Copyright 2012 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
@@ -18,12 +18,20 @@ package nz.gen.geek_central.GPSSatPointer;
 */
 
 import android.util.FloatMath;
+import javax.microedition.khronos.opengles.GL10;
+import nz.gen.geek_central.GLUseful.Vec3f;
+import nz.gen.geek_central.GLUseful.Mat4f;
+import nz.gen.geek_central.GLUseful.GLUseful;
 import nz.gen.geek_central.GLUseful.GeomBuilder;
 import nz.gen.geek_central.GLUseful.Lathe;
+import nz.gen.geek_central.GLUseful.GLView;
+import static nz.gen.geek_central.GLUseful.GLUseful.gl;
+import nz.gen.geek_central.GraphicsUseful.PaintBuilder;
 
-public class VectorView
+public class VectorView extends android.opengl.GLSurfaceView
   {
-    static final android.opengl.GLES11 gl = new android.opengl.GLES11(); /* for easier references */
+    public int Rotation;
+      /* can't find any way to figure this out in this class, need an Activity to pass it to me */
 
   /* parameters for arrow: */
     private static final float BodyThickness = 0.05f;
@@ -33,10 +41,19 @@ public class VectorView
     private static final float BaseBevel = 0.2f * BodyThickness;
     private static final int NrSectors = 12;
 
-    private final GeomBuilder.Obj
+    private boolean SetupDone = false; /* for one-off setup only */
+    private GLView Background;
+    private GeomBuilder.Obj
         CompassArrow, SatArrow;
+    private final java.util.HashMap<Integer, ArrowLabel>
+        SatLabels = new java.util.HashMap<Integer, ArrowLabel>();
+    private ArrowLabel CompassLabel;
+    private final android.graphics.Paint LabelPaint = new PaintBuilder(true)
+      /* .setTextSize done after I determine appropriate scaling */
+        .setColor(0xfffff4aa)
+        .get();
 
-    static class SatInfo
+    private static class SatInfo
       {
       /* all the GpsSatellite info I care about */
         final float Azimuth, Elevation; /* radians */
@@ -54,7 +71,78 @@ public class VectorView
             this.Prn = Prn;
           } /*SatInfo*/
 
-      } /*SatInfo*/
+      } /*SatInfo*/;
+
+    Mat4f ProjectionMatrix;
+    float ViewRadius;
+
+    private class ArrowLabel
+      /* text labels positioned at arrow heads */
+      {
+        final GLView Image;
+        boolean Used = true;
+
+        public ArrowLabel
+          (
+            String Label
+          )
+          {
+            final android.graphics.Rect TextBounds = new android.graphics.Rect();
+            LabelPaint.getTextBounds(Label, 0, Label.length(), TextBounds);
+            final float Slop = 0.2f;
+            Image = new GLView
+              (
+                Math.round((TextBounds.right - TextBounds.left) * (1.0f + Slop)),
+                Math.round((TextBounds.bottom - TextBounds.top) * (1.0f + Slop))
+              );
+            System.err.printf
+              (
+                "Bounds of label “%s” at size %.2f = (%d, %d, %d, %d), bits bounds = (%d, %d), translate to (%.2f, %.2f)\n",
+                Label,
+                LabelPaint.getTextSize(),
+                TextBounds.left, TextBounds.top, TextBounds.right, TextBounds.bottom,
+                Image.BitsWidth, Image.BitsHeight,
+                (TextBounds.right - TextBounds.left) * Slop * 0.5f - TextBounds.left,
+                (TextBounds.bottom - TextBounds.top) * Slop * 0.5f - TextBounds.top
+              ); /* debug */
+              {
+                final android.graphics.Canvas g = Image.Draw;
+                g.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
+                  /* initialize all pixels to fully transparent */
+                g.save();
+                g.translate
+                  (
+                    (TextBounds.right - TextBounds.left) * Slop * 0.5f - TextBounds.left,
+                    (TextBounds.bottom - TextBounds.top) * Slop * 0.5f - TextBounds.top
+                  );
+                g.drawText(Label, 0.0f, 0.0f, LabelPaint);
+                g.restore();
+              }
+            Image.DrawChanged();
+          } /*ArrowLabel*/
+
+        public void Draw
+          (
+            android.graphics.PointF Where /* (0, 0) is at centre, range is ±ViewRadius */
+          )
+          {
+            Image.Draw
+              (
+                /*Projection =*/ Mat4f.identity(),
+                /*Left =*/ (Where.x - Image.BitsWidth / 2.0f) / ViewRadius,
+                /*Bottom =*/ (- Where.y - Image.BitsHeight / 2.0f) / ViewRadius,
+                /*Right =*/ (Where.x + Image.BitsWidth / 2.0f) / ViewRadius,
+                /*Top =*/ (- Where.y + Image.BitsHeight / 2.0f) / ViewRadius,
+                /*Depth =*/ 0.01f
+              );
+          } /*Draw*/
+
+        public void Release()
+          {
+            Image.Release();
+          } /*Release*/
+
+      } /*ArrowLabel*/;
 
     float OrientAzi = 0.0f;
       /* always Earth-horizontal, regardless of orientation of phone */
@@ -71,7 +159,7 @@ public class VectorView
 
     private static GeomBuilder.Obj MakeArrow
       (
-        boolean FullLength
+        boolean Compass /* false for satellite */
       )
       {
         final float OuterTiltCos =
@@ -82,39 +170,40 @@ public class VectorView
             HeadThickness / (float)Math.hypot(HeadThickness, HeadLengthInner);
         final float InnerTiltSin =
             HeadLengthInner / (float)Math.hypot(HeadThickness, HeadLengthInner);
-        final GeomBuilder.Vec3f[] Points =
-            new GeomBuilder.Vec3f[]
+        final Vec3f[] Points =
+            new Vec3f[]
               {
-                new GeomBuilder.Vec3f(0.0f, 1.0f, 0.0f),
-                new GeomBuilder.Vec3f(HeadThickness, 1.0f - HeadLengthOuter, 0.0f),
-                new GeomBuilder.Vec3f(BodyThickness, 1.0f - HeadLengthInner, 0.0f),
-                new GeomBuilder.Vec3f(BodyThickness, FullLength ? BaseBevel - 1.0f : BaseBevel, 0.0f),
-                new GeomBuilder.Vec3f(BodyThickness - BaseBevel, FullLength ? -0.98f : 0.02f, 0.0f),
+                new Vec3f(0.0f, 1.0f, 0.0f),
+                new Vec3f(HeadThickness, 1.0f - HeadLengthOuter, 0.0f),
+                new Vec3f(BodyThickness, 1.0f - HeadLengthInner, 0.0f),
+                new Vec3f(BodyThickness, Compass ? BaseBevel - 1.0f : BaseBevel, 0.0f),
+                new Vec3f(BodyThickness - BaseBevel, Compass ? -0.98f : 0.02f, 0.0f),
                   /* y-coord of -1.0 seems to produce gaps in rendering when base
                     is face-on to viewer */
-                new GeomBuilder.Vec3f(0.0f, FullLength ? -1.0f : 0.0f, 0.0f),
+                new Vec3f(0.0f, Compass ? -1.0f : 0.0f, 0.0f),
               };
-        final GeomBuilder.Vec3f[] Normals =
-            new GeomBuilder.Vec3f[]
+        final Vec3f[] Normals =
+            new Vec3f[]
               {
-                new GeomBuilder.Vec3f(OuterTiltSin, OuterTiltCos, 0.0f), /* tip */
-                new GeomBuilder.Vec3f(InnerTiltSin, - InnerTiltCos, 0.0f), /* head */
-                new GeomBuilder.Vec3f(1.0f, 0.0f, 0.0f), /* body */
-                new GeomBuilder.Vec3f
+                new Vec3f(OuterTiltSin, OuterTiltCos, 0.0f), /* tip */
+                new Vec3f(InnerTiltSin, - InnerTiltCos, 0.0f), /* head */
+                new Vec3f(1.0f, 0.0f, 0.0f), /* body */
+                new Vec3f
                   (
                     FloatMath.sqrt(0.5f),
                     -FloatMath.sqrt(0.5f),
                     0.0f
                   ), /* bevel */
-                new GeomBuilder.Vec3f(0.0f, -1.0f, 0.0f), /* base */
+                new Vec3f(0.0f, -1.0f, 0.0f), /* base */
               };
         return
             Lathe.Make
               (
+                /*Shaded =*/ true,
                 /*Points =*/
                     new Lathe.VertexFunc()
                       {
-                        public GeomBuilder.Vec3f Get
+                        public Vec3f Get
                           (
                             int PointIndex
                           )
@@ -127,7 +216,7 @@ public class VectorView
                 /*Normal =*/
                     new Lathe.VectorFunc()
                       {
-                        public GeomBuilder.Vec3f Get
+                        public Vec3f Get
                           (
                             int PointIndex,
                             int SectorIndex, /* 0 .. NrSectors - 1 */
@@ -139,10 +228,10 @@ public class VectorView
                           {
                             final float FaceAngle =
                                 (float)(2.0 * Math.PI * SectorIndex / NrSectors);
-                            final GeomBuilder.Vec3f OrigNormal =
+                            final Vec3f OrigNormal =
                                 Normals[PointIndex - (Upper ? 0 : 1)];
                             return
-                                new GeomBuilder.Vec3f
+                                new Vec3f
                                   (
                                     OrigNormal.x * FloatMath.cos(FaceAngle),
                                     OrigNormal.y,
@@ -152,15 +241,52 @@ public class VectorView
                       } /*VectorFunc*/,
                 /*TexCoord = */ null,
                 /*VertexColor =*/ null,
-                /*NrSectors =*/ NrSectors
+                /*NrSectors =*/ NrSectors,
+                /*Uniforms =*/
+                    Compass ?
+                        null
+                    :
+                        new GeomBuilder.ShaderVarDef[]
+                            {
+                                new GeomBuilder.ShaderVarDef("arrow_color", GeomBuilder.ShaderVarTypes.TYPE_VEC3),
+                            },
+                /*VertexColorCalc =*/
+                        "    vec3 light_direction = vec3(-0.7, 0.7, 0.0);\n" +
+                        "    float light_brightness = 1.0;\n" +
+                        "    float light_contrast = 0.5;\n" +
+                        "    float attenuate = 1.2 - 0.4 * gl_Position.z;\n"
+                    +
+                        (Compass ?
+                            "    vec3 arrow_color = vec3(0.28, 0.76, 0.69);\n"
+                        :
+                            "" /* comes from uniform */
+                        )
+                    +
+                        "    frag_color = vec4\n" +
+                        "      (\n" +
+                        "            arrow_color\n" +
+                        "        *\n" +
+                        "            attenuate\n" +
+                        "        *\n" +
+                        "            (\n" +
+                        "                light_brightness\n" +
+                        "            -\n" +
+                        "                light_contrast\n" +
+                        "            +\n" +
+                        "                    light_contrast\n" +
+                        "                *\n" +
+                        "                    dot\n" +
+                        "                      (\n" +
+                        "                        normalize(model_view * vec4(vertex_normal, 1.0)).xyz,\n" +
+                        "                        normalize(light_direction)\n" +
+                        "                      )\n" +
+                        "            ),\n" +
+                        "        1.0\n" +
+                        "      );\n" +
+                      /* simpleminded non-specular lighting */
+                        "    back_color = vec4(vec3(0.5, 0.5, 0.5) * attenuate, 1.0);\n"
               );
       } /*MakeArrow*/
-
-    public VectorView()
-      {
-        CompassArrow = MakeArrow(true);
-        SatArrow = MakeArrow(false);
-      } /*VectorView*/
 
     public void SetOrientation
       (
@@ -180,24 +306,85 @@ public class VectorView
             ).mul(
                 Mat4f.rotation(Mat4f.AXIS_Y, OrientRoll)
             );
+        requestRender();
       } /*SetOrientation*/
 
     public void SetSats
       (
-        Iterable<android.location.GpsSatellite> Sats
+        final Iterable<android.location.GpsSatellite> Sats
       )
       /* specifies a new set of satellite data to display. */
       {
-        java.util.ArrayList<SatInfo> NewSats = new java.util.ArrayList<SatInfo>();
-        for (android.location.GpsSatellite ThisSat : Sats)
-          {
-            NewSats.add
-              (
-                new SatInfo(ThisSat.getAzimuth(), ThisSat.getElevation(), ThisSat.getPrn())
-              );
-          } /*for*/
-        this.Sats = NewSats.toArray(new SatInfo[NewSats.size()]);
+        Render.QueueTask
+          /* need to run on GL thread because of creation/deletion of ArrowLabel objects */
+          (
+            new Runnable()
+              {
+                public void run()
+                  {
+                    java.util.ArrayList<SatInfo> NewSats = new java.util.ArrayList<SatInfo>();
+                    for (ArrowLabel ThisSat : SatLabels.values())
+                      {
+                        ThisSat.Used = false; /* initial assumption */
+                      } /*for*/
+                    for (android.location.GpsSatellite ThisSat : Sats)
+                      {
+                        final int ThisPrn = ThisSat.getPrn();
+                        NewSats.add
+                          (
+                            new SatInfo
+                              (
+                                ThisSat.getAzimuth(),
+                                ThisSat.getElevation(),
+                                ThisPrn
+                              )
+                          );
+                        final String ThisLabel = String.format(GLUseful.StdLocale, "%d", ThisPrn);
+                        final ArrowLabel LabelEntry = SatLabels.get(ThisPrn);
+                        if (LabelEntry != null)
+                          {
+                            LabelEntry.Used = true;
+                          }
+                        else
+                          {
+                            SatLabels.put(ThisPrn, new ArrowLabel(ThisLabel));
+                          } /*if*/
+                      } /*for*/
+                    VectorView.this.Sats = NewSats.toArray(new SatInfo[NewSats.size()]);
+                    final java.util.ArrayList<Integer> ToRemove = new java.util.ArrayList<Integer>();
+                      /* cannot do concurrent removing while iterating */
+                    for
+                      (
+                        java.util.Map.Entry<Integer, ArrowLabel> ThisSat : SatLabels.entrySet()
+                      )
+                      {
+                        if (!ThisSat.getValue().Used)
+                          {
+                            ThisSat.getValue().Release();
+                            ToRemove.add(ThisSat.getKey());
+                          } /*if*/
+                      } /*for*/
+                    for (Integer ThisSat : ToRemove)
+                      {
+                        SatLabels.remove(ThisSat);
+                      } /*for*/
+                  } /*run*/
+              } /*Runnable*/
+          );
+        requestRender();
       } /*SetSats*/
+
+    public void SetFlashPrn
+      (
+        int NewFlashPrn /* -1 not to flash any sat */
+      )
+      {
+        if (NewFlashPrn != FlashPrn)
+          {
+            FlashPrn = NewFlashPrn;
+            requestRender();
+          } /*if*/
+      } /*SetFlashPrn*/
 
     public Vec3f OurDirection
       (
@@ -206,37 +393,35 @@ public class VectorView
       )
      /* returns direction vector corresponding to Azimuth and Elevation in phone coordinates. */
       {
-        Vec3f D;
         final float AziCos = FloatMath.cos(Azimuth);
         final float AziSin = FloatMath.sin(Azimuth);
         final float ElevCos = FloatMath.cos(Elevation);
         final float ElevSin = FloatMath.sin(Elevation);
-        D = OrientMatrix.xform
-          (
-            new Vec3f
-              (
-                  AziSin * ElevCos,
-                  - AziCos * ElevCos,
-                  ElevSin
-              )
-          );
         return 
-            D;
+            OrientMatrix.xform
+              (
+                new Vec3f
+                  (
+                      AziSin * ElevCos,
+                      - AziCos * ElevCos,
+                      ElevSin
+                  )
+              );
       } /*OurDirection*/
 
     public android.graphics.PointF PointAt
       (
         float Azimuth,
-        float Elevation,
-        float Radius
+        float Elevation
       )
       /* returns the coordinates where the tip of the arrow should lie. */
       {
         final Vec3f D = OurDirection(Azimuth, Elevation);
-        final float[] Result = {0.0f, + Radius};
+        final float[] Result = {0.0f, + ViewRadius};
         final android.graphics.Matrix Orient = new android.graphics.Matrix();
         Orient.postScale(1.0f, (float)Math.hypot(D.x, D.y));
           /* perspective foreshortening factor */
+          /* fixme: perhaps replace with transformation through actual OpenGL matrices */
         Orient.postRotate(GraphicsUseful.ToDegrees((float)Math.atan2(- D.x, D.y)));
         Orient.mapPoints(Result);
         return
@@ -250,98 +435,217 @@ public class VectorView
       )
       /* initial setup for drawing that doesn't need to be done for every frame. */
       {
+        ViewRadius = Math.min(ViewWidth, ViewHeight) / 2.0f;
+        if (!SetupDone)
+          {
+            final float FontScale;
+              {
+                final android.util.DisplayMetrics Metrics = new android.util.DisplayMetrics();
+                (
+                    (android.view.WindowManager)
+                        getContext()
+                            .getSystemService(android.content.Context.WINDOW_SERVICE)
+                ).getDefaultDisplay().getMetrics(Metrics);
+                FontScale = Metrics.density;
+              }
+            LabelPaint.setTextSize(24.0f * FontScale);
+            SetupDone = true;
+          } /*if*/
+        if (Background != null) /* force re-creation to match view dimensions */
+          {
+            Background.Release();
+            Background = null;
+          } /*if*/
         gl.glEnable(gl.GL_CULL_FACE);
-      /* gl.glEnable(gl.GL_MULTISAMPLE); */ /* doesn't seem to make any difference */
-        gl.glShadeModel(gl.GL_SMOOTH);
-        gl.glEnable(gl.GL_LIGHTING);
-        gl.glEnable(gl.GL_LIGHT0);
         gl.glEnable(gl.GL_DEPTH_TEST);
-        gl.glViewport(0, 0, ViewWidth, ViewHeight);
-        gl.glMatrixMode(gl.GL_PROJECTION);
-        gl.glLoadIdentity();
-        gl.glFrustumf
-          (
-            /*l =*/ - (float)ViewWidth / ViewHeight,
-            /*r =*/ (float)ViewWidth / ViewHeight,
-            /*b =*/ -1.0f,
-            /*t =*/ 1.0f,
-            /*n =*/ 1.0f,
-            /*f =*/ 10.0f
-          );
+        gl.glViewport(0, 0, Math.round(2.0f * ViewRadius), Math.round(2.0f * ViewRadius));
+        ProjectionMatrix =
+                Mat4f.frustum
+                  (
+                    /*L =*/ - (float)ViewWidth / ViewHeight,
+                    /*R =*/ (float)ViewWidth / ViewHeight,
+                    /*B =*/ -1.0f,
+                    /*T =*/ 1.0f,
+                    /*N =*/ 1.0f,
+                    /*F =*/ 10.0f
+                  )
+            .mul(
+                Mat4f.translation(new Vec3f(0.0f, 0.0f, -3.0f))
+            );
       } /*Setup*/
 
     public void Draw()
       /* draws all the satellite and compass arrows. Setup must already
         have been called on current GL context. */
       {
+        if (CompassArrow == null)
+          {
+            CompassArrow = MakeArrow(true);
+          } /*if*/
+        if (SatArrow == null)
+          {
+            SatArrow = MakeArrow(false);
+          } /*if*/
+        if (CompassLabel == null)
+          {
+            CompassLabel = new ArrowLabel("N");
+          } /*if*/
+        if (Background == null)
+          {
+            final int ViewSize = Math.round(2.0f * ViewRadius);
+            Background = new GLView(ViewSize, ViewSize);
+            final android.graphics.Canvas g = Background.Draw;
+            g.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
+              /* initialize all pixels to fully transparent */
+            g.save();
+            g.translate(ViewRadius, ViewRadius);
+            g.drawArc
+              (
+                /*oval =*/ new android.graphics.RectF(-ViewRadius, -ViewRadius, ViewRadius, ViewRadius),
+                /*startAngle =*/ 0.0f,
+                /*sweepAngle =*/ 360.0f,
+                /*useCenter =*/ false,
+                /*paint =*/ new PaintBuilder(true)
+                    .setStyle(android.graphics.Paint.Style.FILL)
+                    .setColor(0xff0a6d01)
+                    .get()
+              );
+            g.restore();
+          } /*if*/
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
-        gl.glMatrixMode(gl.GL_MODELVIEW);
-        gl.glLoadIdentity();
-      /* Note that, by positioning the light _before_ doing all the
-        rotate calls, its position is fixed relative to the display,
-        not the arrows. */
-        gl.glLightfv
+        Background.Draw
           (
-            /*light =*/ gl.GL_LIGHT0,
-            /*pname =*/ gl.GL_POSITION,
-            /*params =*/ new float[] {0.0f, 2.0f, -2.0f, 1.0f},
-            /*offset =*/ 0
+            /*Projection =*/ Mat4f.identity(),
+            /*Left =*/ -1.0f,
+            /*Bottom =*/ -1.0f,
+            /*Right =*/ 1.0f,
+            /*Top =*/ 1.0f,
+            /*Depth =*/ 0.99f
           );
-        gl.glLightfv
-          (
-            /*light =*/ gl.GL_LIGHT0,
-            /*pname =*/ gl.GL_AMBIENT,
-            /*params =*/ new float[] {0.4f, 0.4f, 0.4f, 1.0f},
-            /*offset =*/ 0
-          );
-        gl.glLightfv
-          (
-            /*light =*/ gl.GL_LIGHT0,
-            /*pname =*/ gl.GL_SPECULAR,
-            /*params =*/ new float[] {0.7f, 0.7f, 0.7f, 1.0f},
-            /*offset =*/ 0
-          );
-        gl.glMaterialfv
-          (
-            /*face =*/ gl.GL_FRONT_AND_BACK,
-            /*pname =*/ gl.GL_AMBIENT,
-            /*params =*/ new float[] {0.4f, 0.4f, 0.4f, 1.0f},
-            /*offset =*/ 0
-          );
-        gl.glTranslatef(0, 0, -3.0f);
-        gl.glScalef(2.0f, 2.0f, 2.0f);
-        gl.glFrontFace(gl.GL_CCW);
-        gl.glRotatef(GraphicsUseful.ToDegrees(OrientRoll), 0, 1, 0);
-        gl.glRotatef(GraphicsUseful.ToDegrees(OrientElev), 1, 0, 0);
-        gl.glRotatef(GraphicsUseful.ToDegrees(OrientAzi), 0, 0, 1);
+        final Mat4f Orientation =
+            (
+                Mat4f.rotation(Mat4f.AXIS_Y, OrientRoll)
+            ).mul(
+                Mat4f.rotation(Mat4f.AXIS_X, OrientElev)
+            ).mul(
+                Mat4f.rotation(Mat4f.AXIS_Z, OrientAzi)
+            ).mul(
+                Mat4f.scaling(2.0f, 2.0f, 2.0f)
+            );
         for (SatInfo ThisSat : Sats)
           {
-            gl.glPushMatrix();
-            gl.glRotatef(- GraphicsUseful.ToDegrees(ThisSat.Azimuth), 0, 0, 1);
-            gl.glRotatef(GraphicsUseful.ToDegrees(ThisSat.Elevation), 1, 0, 0);
-            gl.glMaterialfv
+            SatArrow.Draw
               (
-                /*face =*/ gl.GL_FRONT_AND_BACK,
-                /*pname =*/ gl.GL_SPECULAR,
-                /*params =*/
-                    ThisSat.Prn == FlashPrn ?
-                        new float[] {0.81f, 0.08f, 0.93f, 1.0f}
-                    :
-                        new float[] {0.93f, 0.87f, 0.04f, 1.0f},
-                /*offset =*/ 0
+                /*ProjectionMatrix =*/ ProjectionMatrix,
+                /*ModelViewMatrix =*/
+                        Orientation
+                    .mul
+                        (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
+                    .mul
+                        (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation)),
+                /*Uniforms =*/
+                    new GeomBuilder.ShaderVarVal[]
+                        {
+                            new GeomBuilder.ShaderVarVal
+                              (
+                                "arrow_color",
+                                ThisSat.Prn == FlashPrn ?
+                                    new float[]{0.81f, 0.08f, 0.93f}
+                                :
+                                    new float[]{0.93f, 0.87f, 0.04f}
+                              ),
+                        }
               );
-            SatArrow.Draw();
-            gl.glPopMatrix();
           } /*for*/
-        gl.glMaterialfv
+        CompassArrow.Draw
           (
-            /*face =*/ gl.GL_FRONT_AND_BACK,
-            /*pname =*/ gl.GL_SPECULAR,
-            /*params =*/ new float[] {0.28f, 0.76f, 0.69f, 1.0f},
-            /*offset =*/ 0
+            /*ProjectionMatrix =*/ ProjectionMatrix,
+            /*ModelViewMatrix =*/ Orientation,
+            /*Uniforms =*/ null
           );
-        CompassArrow.Draw();
+      /* now draw text labels on top */
+        CompassLabel.Draw(PointAt(0.0f, 0.0f));
+        for (SatInfo ThisSat : Sats)
+          {
+            SatLabels.get(ThisSat.Prn).Draw
+              (
+                PointAt(ThisSat.Azimuth, ThisSat.Elevation)
+              );
+          } /*for*/
       } /*Draw*/
+
+    private class VectorViewRenderer implements Renderer
+      {
+        private final java.util.ArrayList<Runnable> TaskQueue = new java.util.ArrayList<Runnable>();
+
+        public void QueueTask
+          (
+            Runnable Task
+          )
+          /* queues a task to run on the GL thread, while a GL context is valid. */
+          {
+            TaskQueue.add(Task);
+          } /*QueueTask*/
+
+        public void onDrawFrame
+          (
+            GL10 _gl
+          )
+          {
+            while (!TaskQueue.isEmpty())
+              {
+                final Runnable Task = TaskQueue.remove(0);
+                Task.run();
+              } /*while*/
+            Draw();
+          } /*onDrawFrame*/
+
+        public void onSurfaceChanged
+          (
+            GL10 _gl,
+            int ViewWidth,
+            int ViewHeight
+          )
+          {
+            Setup(ViewWidth, ViewHeight);
+          } /*onSurfaceChanged*/
+
+        public void onSurfaceCreated
+          (
+            GL10 _gl,
+            javax.microedition.khronos.egl.EGLConfig Config
+          )
+          {
+          /* leave all actual work to onSurfaceChanged */
+          } /*onSurfaceCreated*/
+
+      } /*VectorViewRenderer*/;
+
+    final VectorViewRenderer Render = new VectorViewRenderer();
+
+    public VectorView
+      (
+        android.content.Context TheContext,
+        android.util.AttributeSet TheAttributes
+      )
+      {
+        super(TheContext, TheAttributes);
+        setEGLContextClientVersion(2);
+        setRenderer(Render);
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
+      } /*VectorView*/
+
+    @Override
+    public void onPause()
+      {
+        super.onPause();
+      /* losing the GL context anyway, so don't bother releasing anything: */
+        CompassArrow = null;
+        SatArrow = null;
+        Background = null;
+        CompassLabel = null;
+        SatLabels.clear();
+      } /*onPause*/
 
   } /*VectorView*/

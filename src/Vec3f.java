@@ -1,4 +1,4 @@
-package nz.gen.geek_central.GPSSatPointer;
+package nz.gen.geek_central.GLUseful;
 /*
     functional 3D vector operations
 
@@ -126,6 +126,12 @@ public class Vec3f
         return
             new Vec3f(x * s, y * s, z * s, w);
       } /*mul*/
+
+    public Vec3f recip()
+      {
+        return
+            new Vec3f(1.0f / x, 1.0f / y, 1.0f / z);
+      } /*recip*/
 
     public float dot
       (
