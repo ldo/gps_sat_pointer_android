@@ -41,7 +41,12 @@ public class VectorView extends android.opengl.GLSurfaceView
     private static final float BaseBevel = 0.2f * BodyThickness;
     private static final int NrSectors = 12;
 
-    private boolean SetupDone = false; /* for one-off setup only */
+    private final int NullColor = getResources().getColor(R.color.nothing);
+    private final GLUseful.Color NormalSatColor =
+        new GLUseful.Color(getResources().getColor(R.color.normal_sat));
+    private final GLUseful.Color FlashSatColor =
+        new GLUseful.Color(getResources().getColor(R.color.flash_sat));
+
     private GLView Background;
     private GeomBuilder.Obj
         CompassArrow, SatArrow;
@@ -49,8 +54,8 @@ public class VectorView extends android.opengl.GLSurfaceView
         SatLabels = new java.util.HashMap<Integer, ArrowLabel>();
     private ArrowLabel CompassLabel;
     private final android.graphics.Paint LabelPaint = new PaintBuilder(true)
-      /* .setTextSize done after I determine appropriate scaling */
-        .setColor(0xfffff4aa)
+        .setTextSize(getResources().getDimension(R.dimen.label_text_size))
+        .setColor(getResources().getColor(R.color.label_text))
         .get();
 
     private static class SatInfo
@@ -379,21 +384,6 @@ public class VectorView extends android.opengl.GLSurfaceView
       /* initial setup for drawing that doesn't need to be done for every frame. */
       {
         ViewRadius = Math.min(ViewWidth, ViewHeight) / 2.0f;
-        if (!SetupDone)
-          {
-            final float FontScale;
-              {
-                final android.util.DisplayMetrics Metrics = new android.util.DisplayMetrics();
-                (
-                    (android.view.WindowManager)
-                        getContext()
-                            .getSystemService(android.content.Context.WINDOW_SERVICE)
-                ).getDefaultDisplay().getMetrics(Metrics);
-                FontScale = Metrics.density;
-              }
-            LabelPaint.setTextSize(24.0f * FontScale);
-            SetupDone = true;
-          } /*if*/
         if (Background != null) /* force re-creation to match view dimensions */
           {
             Background.Release();
@@ -443,7 +433,7 @@ public class VectorView extends android.opengl.GLSurfaceView
             final int ViewSize = Math.round(2.0f * ViewRadius);
             Background = new GLView(ViewSize, ViewSize);
             final android.graphics.Canvas g = Background.Draw;
-            g.drawColor(0, android.graphics.PorterDuff.Mode.SRC);
+            g.drawColor(NullColor, android.graphics.PorterDuff.Mode.SRC);
               /* initialize all pixels to fully transparent */
             g.save();
             g.translate(ViewRadius, ViewRadius);
@@ -455,12 +445,12 @@ public class VectorView extends android.opengl.GLSurfaceView
                 /*useCenter =*/ false,
                 /*paint =*/ new PaintBuilder(true)
                     .setStyle(android.graphics.Paint.Style.FILL)
-                    .setColor(0xff0a6d01)
+                    .setColor(getResources().getColor(R.color.background))
                     .get()
               );
             g.restore();
           } /*if*/
-        gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        GLUseful.ClearColor(new GLUseful.Color(NullColor));
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
         gl.glDisable(gl.GL_DEPTH_TEST);
         Background.Draw
@@ -514,9 +504,9 @@ public class VectorView extends android.opengl.GLSurfaceView
                                       (
                                         "arrow_color",
                                         ThisSat.Prn == FlashPrn ?
-                                            new float[]{0.81f, 0.08f, 0.93f}
+                                            FlashSatColor.ToFloats(3)
                                         :
-                                            new float[]{0.93f, 0.87f, 0.04f}
+                                            NormalSatColor.ToFloats(3)
                                       ),
                                 }
                       );
