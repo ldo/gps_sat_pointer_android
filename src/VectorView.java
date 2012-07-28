@@ -540,7 +540,10 @@ public class VectorView extends android.opengl.GLSurfaceView
           )
           /* queues a task to run on the GL thread, while a GL context is valid. */
           {
-            TaskQueue.add(Task);
+            synchronized (TaskQueue)
+              {
+                TaskQueue.add(Task);
+              } /*synchronized*/
           } /*QueueTask*/
 
         public void onDrawFrame
@@ -548,11 +551,17 @@ public class VectorView extends android.opengl.GLSurfaceView
             GL10 _gl
           )
           {
-            while (!TaskQueue.isEmpty())
+            for (;;)
               {
-                final Runnable Task = TaskQueue.remove(0);
+                final Runnable Task;
+                synchronized (TaskQueue)
+                  {
+                    Task = !TaskQueue.isEmpty() ? TaskQueue.remove(0) : null;
+                  } /*synchronized*/
+                if (Task == null)
+                    break;
                 Task.run();
-              } /*while*/
+              } /*for*/
             Draw();
           } /*onDrawFrame*/
 
