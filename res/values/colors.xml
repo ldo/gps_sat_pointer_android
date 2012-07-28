@@ -3,6 +3,7 @@
     <color name="nothing">#00000000</color> <!-- full transparency -->
     <color name="background">#ff0a6d01</color>
     <color name="label_text">#fffff4aa</color>
+    <color name="compass">#ff47c2b0</color>
     <color name="normal_sat">#ffedde0a</color>
     <color name="flash_sat">#ffcf14ed</color>
 </resources>

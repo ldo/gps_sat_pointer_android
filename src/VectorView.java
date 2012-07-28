@@ -42,6 +42,8 @@ public class VectorView extends android.opengl.GLSurfaceView
     private static final int NrSectors = 12;
 
     private final int NullColor = getResources().getColor(R.color.nothing);
+    private final GLUseful.Color CompassColor =
+        new GLUseful.Color(getResources().getColor(R.color.compass));
     private final GLUseful.Color NormalSatColor =
         new GLUseful.Color(getResources().getColor(R.color.normal_sat));
     private final GLUseful.Color FlashSatColor =
@@ -240,48 +242,38 @@ public class VectorView extends android.opengl.GLSurfaceView
                 /*VertexColor =*/ null,
                 /*NrSectors =*/ NrSectors,
                 /*Uniforms =*/
-                    Compass ?
-                        null
-                    :
-                        new GeomBuilder.ShaderVarDef[]
-                            {
-                                new GeomBuilder.ShaderVarDef("arrow_color", GeomBuilder.ShaderVarTypes.TYPE_VEC3),
-                            },
+                    new GeomBuilder.ShaderVarDef[]
+                        {
+                            new GeomBuilder.ShaderVarDef("arrow_color", GeomBuilder.ShaderVarTypes.TYPE_VEC3),
+                        },
                 /*VertexColorCalc =*/
-                        "    vec3 light_direction = vec3(-0.7, 0.7, 0.0);\n" +
-                        "    float light_brightness = 1.0;\n" +
-                        "    float light_contrast = 0.5;\n" +
-                        "    float attenuate = 1.2 - 0.4 * gl_Position.z;\n"
-                    +
-                        (Compass ?
-                            "    vec3 arrow_color = vec3(0.28, 0.76, 0.69);\n"
-                        :
-                            "" /* comes from uniform */
-                        )
-                    +
-                        "    frag_color = vec4\n" +
-                        "      (\n" +
-                        "            arrow_color\n" +
-                        "        *\n" +
-                        "            attenuate\n" +
-                        "        *\n" +
-                        "            (\n" +
-                        "                light_brightness\n" +
-                        "            -\n" +
-                        "                light_contrast\n" +
-                        "            +\n" +
-                        "                    light_contrast\n" +
-                        "                *\n" +
-                        "                    dot\n" +
-                        "                      (\n" +
-                        "                        normalize(model_view * vec4(vertex_normal, 1.0)).xyz,\n" +
-                        "                        normalize(light_direction)\n" +
-                        "                      )\n" +
-                        "            ),\n" +
-                        "        1.0\n" +
-                        "      );\n" +
-                      /* simpleminded non-specular lighting */
-                        "    back_color = vec4(vec3(0.5, 0.5, 0.5) * attenuate, 1.0);\n"
+                    "    vec3 light_direction = vec3(-0.7, 0.7, 0.0);\n" +
+                    "    float light_brightness = 1.0;\n" +
+                    "    float light_contrast = 0.5;\n" +
+                    "    float attenuate = 1.2 - 0.4 * gl_Position.z;\n" +
+                    "    frag_color = vec4\n" +
+                    "      (\n" +
+                    "            arrow_color\n" +
+                    "        *\n" +
+                    "            attenuate\n" +
+                    "        *\n" +
+                    "            (\n" +
+                    "                light_brightness\n" +
+                    "            -\n" +
+                    "                light_contrast\n" +
+                    "            +\n" +
+                    "                    light_contrast\n" +
+                    "                *\n" +
+                    "                    dot\n" +
+                    "                      (\n" +
+                    "                        normalize(model_view * vec4(vertex_normal, 1.0)).xyz,\n" +
+                    "                        normalize(light_direction)\n" +
+                    "                      )\n" +
+                    "            ),\n" +
+                    "        1.0\n" +
+                    "      );\n" +
+                  /* simpleminded non-specular lighting */
+                    "    back_color = vec4(vec3(0.5, 0.5, 0.5) * attenuate, 1.0);\n"
               );
       } /*MakeArrow*/
 
@@ -475,7 +467,15 @@ public class VectorView extends android.opengl.GLSurfaceView
           (
             /*ProjectionMatrix =*/ ProjectionMatrix,
             /*ModelViewMatrix =*/ Orientation,
-            /*Uniforms =*/ null
+            /*Uniforms =*/
+                new GeomBuilder.ShaderVarVal[]
+                    {
+                        new GeomBuilder.ShaderVarVal
+                          (
+                            "arrow_color",
+                            CompassColor.ToFloats(3)
+                          ),
+                    }
           );
         for (boolean DoingLabels = false;;)
           {
