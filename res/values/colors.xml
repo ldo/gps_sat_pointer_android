@@ -5,5 +5,6 @@
     <color name="label_text">#fffff4aa</color>
     <color name="compass">#ff47c2b0</color>
     <color name="normal_sat">#ffedde0a</color>
+    <color name="used_sat">#ffed5711</color>
     <color name="flash_sat">#ffcf14ed</color>
 </resources>

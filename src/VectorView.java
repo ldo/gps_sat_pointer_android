@@ -46,6 +46,8 @@ public class VectorView extends android.opengl.GLSurfaceView
         new GLUseful.Color(getResources().getColor(R.color.compass));
     private final GLUseful.Color NormalSatColor =
         new GLUseful.Color(getResources().getColor(R.color.normal_sat));
+    private final GLUseful.Color UsedSatColor =
+        new GLUseful.Color(getResources().getColor(R.color.used_sat));
     private final GLUseful.Color FlashSatColor =
         new GLUseful.Color(getResources().getColor(R.color.flash_sat));
 
@@ -65,17 +67,20 @@ public class VectorView extends android.opengl.GLSurfaceView
       /* all the GpsSatellite info I care about */
         final float Azimuth, Elevation; /* radians */
         final int Prn; /* unique satellite id? Could use to colour-code or something */
+        final boolean UsedInFix;
 
         public SatInfo
           (
             float Azimuth, /* degrees */
             float Elevation, /* degrees */
-            int Prn
+            int Prn,
+            boolean UsedInFix
           )
           {
             this.Azimuth = GraphicsUseful.ToRadians(Azimuth);
             this.Elevation = GraphicsUseful.ToRadians(Elevation);
             this.Prn = Prn;
+            this.UsedInFix = UsedInFix;
           } /*SatInfo*/
 
       } /*SatInfo*/;
@@ -318,7 +323,8 @@ public class VectorView extends android.opengl.GLSurfaceView
                               (
                                 ThisSat.getAzimuth(),
                                 ThisSat.getElevation(),
-                                ThisPrn
+                                ThisPrn,
+                                ThisSat.usedInFix()
                               )
                           );
                         final String ThisLabel = String.format(GLUseful.StdLocale, "%d", ThisPrn);
@@ -505,6 +511,8 @@ public class VectorView extends android.opengl.GLSurfaceView
                                         "arrow_color",
                                         ThisSat.Prn == FlashPrn ?
                                             FlashSatColor.ToFloats(3)
+                                        : ThisSat.UsedInFix ?
+                                            UsedSatColor.ToFloats(3)
                                         :
                                             NormalSatColor.ToFloats(3)
                                       ),
