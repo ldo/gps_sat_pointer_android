@@ -118,14 +118,14 @@ public class VectorView extends android.opengl.GLSurfaceView
           /* draws the label so its centre coincides with the tip of an arrow in the
             specified orientation. */
           {
-            final Vec3f Where = ProjectionMatrix.mul(OrientMatrix).xform(new Vec3f(0.0f, 1.0f, 0.0f));
+            final Vec3f Where = ProjectionMatrix.mul(OrientMatrix).xform(new Vec3f(0.0f, 1.0f, 0.0f)).norm();
             Image.Draw
               (
                 /*Projection =*/ Mat4f.identity(),
-                /*Left =*/ Where.x / Where.w - Image.BitsWidth / 2.0f / ViewRadius,
-                /*Bottom =*/ Where.y / Where.w - Image.BitsHeight / 2.0f / ViewRadius,
-                /*Right =*/ Where.x / Where.w + Image.BitsWidth / 2.0f / ViewRadius,
-                /*Top =*/ Where.y / Where.w + Image.BitsHeight / 2.0f / ViewRadius,
+                /*Left =*/ Where.x - Image.BitsWidth / 2.0f / ViewRadius,
+                /*Bottom =*/ Where.y - Image.BitsHeight / 2.0f / ViewRadius,
+                /*Right =*/ Where.x + Image.BitsWidth / 2.0f / ViewRadius,
+                /*Top =*/ Where.y + Image.BitsHeight / 2.0f / ViewRadius,
                 /*Depth =*/ 0.01f
               );
           } /*Draw*/
