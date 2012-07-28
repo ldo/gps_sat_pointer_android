@@ -400,7 +400,13 @@ public class VectorView extends android.opengl.GLSurfaceView
             Background = null;
           } /*if*/
         gl.glEnable(gl.GL_CULL_FACE);
-        gl.glViewport(0, 0, Math.round(2.0f * ViewRadius), Math.round(2.0f * ViewRadius));
+        gl.glViewport
+          (
+            Math.round(ViewWidth / 2.0f - ViewRadius),
+            Math.round(ViewHeight / 2.0f - ViewRadius),
+            Math.round(2.0f * ViewRadius),
+            Math.round(2.0f * ViewRadius)
+          );
         ProjectionMatrix =
                 Mat4f.frustum
                   (
