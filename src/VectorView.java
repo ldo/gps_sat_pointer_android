@@ -249,7 +249,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                 /*Uniforms =*/
                     new GeomBuilder.ShaderVarDef[]
                         {
-                            new GeomBuilder.ShaderVarDef("arrow_color", GeomBuilder.ShaderVarTypes.TYPE_VEC3),
+                            new GeomBuilder.ShaderVarDef("arrow_color", GeomBuilder.ShaderVarTypes.COLOR3),
                         },
                 /*VertexColorCalc =*/
                     "    vec3 light_direction = vec3(-0.7, 0.7, 0.0);\n" +
@@ -476,11 +476,7 @@ public class VectorView extends android.opengl.GLSurfaceView
             /*Uniforms =*/
                 new GeomBuilder.ShaderVarVal[]
                     {
-                        new GeomBuilder.ShaderVarVal
-                          (
-                            "arrow_color",
-                            CompassColor.ToFloats(3)
-                          ),
+                        new GeomBuilder.ShaderVarVal("arrow_color", CompassColor),
                     }
           );
         for (boolean DoingLabels = false;;)
@@ -510,11 +506,11 @@ public class VectorView extends android.opengl.GLSurfaceView
                                       (
                                         "arrow_color",
                                         ThisSat.Prn == FlashPrn ?
-                                            FlashSatColor.ToFloats(3)
+                                            FlashSatColor
                                         : ThisSat.UsedInFix ?
-                                            UsedSatColor.ToFloats(3)
+                                            UsedSatColor
                                         :
-                                            NormalSatColor.ToFloats(3)
+                                            NormalSatColor
                                       ),
                                 }
                       );
