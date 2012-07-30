@@ -143,6 +143,7 @@ public class VectorView extends android.opengl.GLSurfaceView
           } /*Draw*/
 
         public void Release()
+          /* frees up GL resources associated with this object. */
           {
             Image.Release();
           } /*Release*/
