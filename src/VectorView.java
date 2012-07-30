@@ -77,8 +77,8 @@ public class VectorView extends android.opengl.GLSurfaceView
             boolean UsedInFix
           )
           {
-            this.Azimuth = GraphicsUseful.ToRadians(Azimuth);
-            this.Elevation = GraphicsUseful.ToRadians(Elevation);
+            this.Azimuth = (float)Math.toRadians(Azimuth);
+            this.Elevation = (float)Math.toRadians(Elevation);
             this.Prn = Prn;
             this.UsedInFix = UsedInFix;
           } /*SatInfo*/
@@ -291,9 +291,9 @@ public class VectorView extends android.opengl.GLSurfaceView
       {
       /* work this out myself--SensorManager.getRotationMatrixFromVector
         isn't available before Android 2.3, API level 9 */
-        OrientAzi = GraphicsUseful.ToRadians(Datum[0]);
-        OrientElev = GraphicsUseful.ToRadians(Datum[1]);
-        OrientRoll = GraphicsUseful.ToRadians(Datum[2]);
+        OrientAzi = (float)Math.toRadians(Datum[0]);
+        OrientElev = (float)Math.toRadians(Datum[1]);
+        OrientRoll = (float)Math.toRadians(Datum[2]);
         requestRender();
       } /*SetOrientation*/
 
