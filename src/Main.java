@@ -370,6 +370,7 @@ public class Main extends android.app.Activity
                   {
                     int GotSats = 0;
                     int UsedSats = 0;
+                    SatsList.setNotifyOnChange(false);
                     SatsList.clear();
                     for (android.location.GpsSatellite ThisSat : LastGPS.getSatellites())
                       {
