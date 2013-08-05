@@ -2,7 +2,7 @@ package nz.gen.geek_central.GPSSatPointer;
 /*
     Graphical display of directional arrows with labels.
 
-    Copyright 2012 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    Copyright 2012, 2013 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@ package nz.gen.geek_central.GPSSatPointer;
     the License.
 */
 
-import android.util.FloatMath;
 import javax.microedition.khronos.opengles.GL10;
 import nz.gen.geek_central.GLUseful.Vec3f;
 import nz.gen.geek_central.GLUseful.Mat4f;
@@ -195,8 +194,8 @@ public class VectorView extends android.opengl.GLSurfaceView
                 new Vec3f(1.0f, 0.0f, 0.0f), /* body */
                 new Vec3f
                   (
-                    FloatMath.sqrt(0.5f),
-                    -FloatMath.sqrt(0.5f),
+                    (float)Math.sqrt(0.5f),
+                    -(float)Math.sqrt(0.5f),
                     0.0f
                   ), /* bevel */
                 new Vec3f(0.0f, -1.0f, 0.0f), /* base */
@@ -238,9 +237,9 @@ public class VectorView extends android.opengl.GLSurfaceView
                             return
                                 new Vec3f
                                   (
-                                    OrigNormal.x * FloatMath.cos(FaceAngle),
+                                    OrigNormal.x * (float)Math.cos(FaceAngle),
                                     OrigNormal.y,
-                                    OrigNormal.x * FloatMath.sin(FaceAngle)
+                                    OrigNormal.x * (float)Math.sin(FaceAngle)
                                   );
                           } /*Get*/
                       } /*VectorFunc*/,
