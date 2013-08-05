@@ -532,7 +532,7 @@ public class Main extends android.app.Activity
                     if (position >= 0 && position < SatsList.getCount())
                       {
                       /* flash the part of the graphic representing the selected satellite */
-                        Listen.FlashSat(((SatItem)SatsList.getItem(position)).Prn);
+                        Listen.FlashSat((SatsList.getItem(position)).Prn);
                       } /*if*/
                   } /*OnItemSelected*/
 
