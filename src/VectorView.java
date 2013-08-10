@@ -95,7 +95,8 @@ public class VectorView extends android.opengl.GLSurfaceView
 
         public ArrowLabel
           (
-            String Label
+            String Label,
+            boolean BindNow
           )
           {
             final android.graphics.Rect TextBounds = new android.graphics.Rect();
@@ -103,8 +104,10 @@ public class VectorView extends android.opengl.GLSurfaceView
             final float Slop = 0.2f;
             Image = new GLView
               (
-                Math.round((TextBounds.right - TextBounds.left) * (1.0f + Slop)),
-                Math.round((TextBounds.bottom - TextBounds.top) * (1.0f + Slop))
+                /*BitsWidth =*/ Math.round((TextBounds.right - TextBounds.left) * (1.0f + Slop)),
+                /*BitsHeight =*/ Math.round((TextBounds.bottom - TextBounds.top) * (1.0f + Slop)),
+                /*CustomFragShading =*/ null,
+                /*BindNow =*/ BindNow
               );
               {
                 final android.graphics.Canvas g = Image.Draw;
@@ -141,11 +144,17 @@ public class VectorView extends android.opengl.GLSurfaceView
               );
           } /*Draw*/
 
-        public void Release()
+        public void Unbind
+          (
+            boolean Release
+              /* true iff GL context still valid, so explicitly free up allocated resources.
+                false means GL context has gone (or is going), so simply forget allocated
+                GL resources without making any GL calls. */
+          )
           /* frees up GL resources associated with this object. */
           {
-            Image.Release();
-          } /*Release*/
+            Image.Unbind(Release);
+          } /*Unbind*/
 
       } /*ArrowLabel*/;
 
@@ -163,7 +172,8 @@ public class VectorView extends android.opengl.GLSurfaceView
 
     private static GeomBuilder.Obj MakeArrow
       (
-        boolean Compass /* false for satellite */
+        boolean Compass, /* false for satellite */
+        boolean BindNow
       )
       {
         final float OuterTiltCos =
@@ -247,9 +257,9 @@ public class VectorView extends android.opengl.GLSurfaceView
                 /*VertexColor =*/ null,
                 /*NrSectors =*/ NrSectors,
                 /*Uniforms =*/
-                    new GeomBuilder.ShaderVarDef[]
+                    new GLUseful.ShaderVarDef[]
                         {
-                            new GeomBuilder.ShaderVarDef("arrow_color", GeomBuilder.ShaderVarTypes.COLOR3),
+                            new GLUseful.ShaderVarDef("arrow_color", GLUseful.ShaderVarTypes.COLOR3),
                         },
                 /*VertexColorCalc =*/
                     "    vec3 light_direction = vec3(-0.7, 0.7, 0.0);\n" +
@@ -278,7 +288,8 @@ public class VectorView extends android.opengl.GLSurfaceView
                     "        1.0\n" +
                     "      );\n" +
                   /* simpleminded non-specular lighting */
-                    "    back_color = vec4(vec3(0.5, 0.5, 0.5) * attenuate, 1.0);\n"
+                    "    back_color = vec4(vec3(0.5, 0.5, 0.5) * attenuate, 1.0);\n",
+                  /*BindNow =*/ BindNow
               );
       } /*MakeArrow*/
 
@@ -335,7 +346,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                           }
                         else
                           {
-                            SatLabels.put(ThisPrn, new ArrowLabel(ThisLabel));
+                            SatLabels.put(ThisPrn, new ArrowLabel(ThisLabel, true));
                           } /*if*/
                       } /*for*/
                     VectorView.this.Sats = NewSats.toArray(new SatInfo[NewSats.size()]);
@@ -348,7 +359,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                       {
                         if (!ThisSat.getValue().Used)
                           {
-                            ThisSat.getValue().Release();
+                            ThisSat.getValue().Unbind(true);
                             ToRemove.add(ThisSat.getKey());
                           } /*if*/
                       } /*for*/
@@ -384,7 +395,7 @@ public class VectorView extends android.opengl.GLSurfaceView
         ViewRadius = Math.min(ViewWidth, ViewHeight) / 2.0f;
         if (Background != null) /* force re-creation to match view dimensions */
           {
-            Background.Release();
+            Background.Unbind(true);
             Background = null;
           } /*if*/
         gl.glEnable(gl.GL_CULL_FACE);
@@ -416,20 +427,26 @@ public class VectorView extends android.opengl.GLSurfaceView
       {
         if (CompassArrow == null)
           {
-            CompassArrow = MakeArrow(true);
+            CompassArrow = MakeArrow(true, true);
           } /*if*/
         if (SatArrow == null)
           {
-            SatArrow = MakeArrow(false);
+            SatArrow = MakeArrow(false, true);
           } /*if*/
         if (CompassLabel == null)
           {
-            CompassLabel = new ArrowLabel("N");
+            CompassLabel = new ArrowLabel("N", true);
           } /*if*/
         if (Background == null)
           {
             final int ViewSize = Math.round(2.0f * ViewRadius);
-            Background = new GLView(ViewSize, ViewSize);
+            Background = new GLView
+              (
+                /*BitsWidth =*/ ViewSize,
+                /*BitsHeight =*/ ViewSize,
+                /*CustomFragShading =*/ null,
+                /*BindNow =*/ true
+              );
             final android.graphics.Canvas g = Background.Draw;
             g.drawColor(NullColor, android.graphics.PorterDuff.Mode.SRC);
               /* initialize all pixels to fully transparent */
@@ -474,9 +491,9 @@ public class VectorView extends android.opengl.GLSurfaceView
             /*ProjectionMatrix =*/ ProjectionMatrix,
             /*ModelViewMatrix =*/ Orientation,
             /*Uniforms =*/
-                new GeomBuilder.ShaderVarVal[]
+                new GLUseful.ShaderVarVal[]
                     {
-                        new GeomBuilder.ShaderVarVal("arrow_color", CompassColor),
+                        new GLUseful.ShaderVarVal("arrow_color", CompassColor),
                     }
           );
         for (boolean DoingLabels = false;;)
@@ -500,9 +517,9 @@ public class VectorView extends android.opengl.GLSurfaceView
                         /*ProjectionMatrix =*/ ProjectionMatrix,
                         /*ModelViewMatrix =*/ SatDirection,
                         /*Uniforms =*/
-                            new GeomBuilder.ShaderVarVal[]
+                            new GLUseful.ShaderVarVal[]
                                 {
-                                    new GeomBuilder.ShaderVarVal
+                                    new GLUseful.ShaderVarVal
                                       (
                                         "arrow_color",
                                         ThisSat.Prn == FlashPrn ?
