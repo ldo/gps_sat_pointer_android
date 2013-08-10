@@ -289,7 +289,7 @@ public class VectorView extends android.opengl.GLSurfaceView
                     "      );\n" +
                   /* simpleminded non-specular lighting */
                     "    back_color = vec4(vec3(0.5, 0.5, 0.5) * attenuate, 1.0);\n",
-                  /*BindNow =*/ BindNow
+                /*BindNow =*/ BindNow
               );
       } /*MakeArrow*/
 
