@@ -106,7 +106,6 @@ public class VectorView extends android.opengl.GLSurfaceView
               (
                 /*BitsWidth =*/ Math.round((TextBounds.right - TextBounds.left) * (1.0f + Slop)),
                 /*BitsHeight =*/ Math.round((TextBounds.bottom - TextBounds.top) * (1.0f + Slop)),
-                /*CustomFragShading =*/ null,
                 /*BindNow =*/ BindNow
               );
               {
@@ -440,13 +439,7 @@ public class VectorView extends android.opengl.GLSurfaceView
         if (Background == null)
           {
             final int ViewSize = Math.round(2.0f * ViewRadius);
-            Background = new GLView
-              (
-                /*BitsWidth =*/ ViewSize,
-                /*BitsHeight =*/ ViewSize,
-                /*CustomFragShading =*/ null,
-                /*BindNow =*/ true
-              );
+            Background = new GLView(ViewSize, ViewSize, true);
             final android.graphics.Canvas g = Background.Draw;
             g.drawColor(NullColor, android.graphics.PorterDuff.Mode.SRC);
               /* initialize all pixels to fully transparent */
