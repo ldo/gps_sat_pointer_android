@@ -33,6 +33,9 @@ public class GLUseful
         System.loadLibrary("gl_useful");
       } /*static*/
 
+    public static final int GL_TEXTURE_EXTERNAL_OES = 0x8D65;
+      /* missing from android.opengl.GLES11Ext in API levels 11 .. 14 */
+
 /*
     Error checking
 */
@@ -428,9 +431,7 @@ public class GLUseful
                 CheckError("setting shader %d source", id);
                 gl.glCompileShader(id);
                 CheckError("compiling shader %d source", id);
-                int[] Status = new int[1];
-                gl.glGetShaderiv(id, gl.GL_COMPILE_STATUS, Status, 0);
-                if (Status[0] == gl.GL_FALSE)
+                if (!GetShaderb(id, gl.GL_COMPILE_STATUS))
                   {
                     System.err.println
                       (
@@ -536,9 +537,7 @@ public class GLUseful
                 gl.glAttachShader(id, FragmentShader.GetID());
                 CheckError("attaching fragment shader to program %d", id);
                 gl.glLinkProgram(id);
-                int[] Status = new int[1];
-                gl.glGetProgramiv(id, gl.GL_LINK_STATUS, Status, 0);
-                if (Status[0] == gl.GL_FALSE)
+                if (!GetProgramb(id, gl.GL_LINK_STATUS))
                   {
                     throw new RuntimeException
                       (
@@ -582,9 +581,7 @@ public class GLUseful
           {
             Bind();
             gl.glValidateProgram(id);
-            int[] Status = new int[1];
-            gl.glGetProgramiv(id, gl.GL_VALIDATE_STATUS, Status, 0);
-            if (Status[0] == gl.GL_FALSE)
+            if (!GetProgramb(id, gl.GL_VALIDATE_STATUS))
               {
                 throw new RuntimeException
                   (
@@ -872,5 +869,210 @@ public class GLUseful
               } /*switch*/
           } /*for*/
       } /*SetUniformVals*/
+
+/*
+    Object ID alllocation
+
+    These all require a valid GL context.
+*/
+
+    public static int[] GenBuffers
+      (
+        int NrBuffers
+      )
+      /* allocates and returns the specified number of buffer IDs. */
+      {
+        final int[] Result = new int[NrBuffers];
+        gl.glGenBuffers(NrBuffers, Result, 0);
+        return
+            Result;
+      } /*GenBuffers*/
+
+    public static int GenBuffer()
+      /* allocates and returns a single buffer ID. */
+      {
+        return
+            GenBuffers(1)[0];
+      } /*GenBuffer*/
+
+    public static int[] GenFramebuffers
+      (
+        int NrFramebuffers
+      )
+      /* allocates and returns the specified number of frame-buffer IDs. */
+      {
+        final int[] Result = new int[NrFramebuffers];
+        gl.glGenFramebuffers(NrFramebuffers, Result, 0);
+        return
+            Result;
+      } /*GenFramebuffers*/
+
+    public static int GenFramebuffer()
+      /* allocates and returns a single frame-buffer ID. */
+      {
+        return
+            GenFramebuffers(1)[0];
+      } /*GenFramebuffer*/
+
+    public static int[] GenRenderbuffers
+      (
+        int NrRenderbuffers
+      )
+      /* allocates and returns the specified number of render-buffer IDs. */
+      {
+        final int[] Result = new int[NrRenderbuffers];
+        gl.glGenRenderbuffers(NrRenderbuffers, Result, 0);
+        return
+            Result;
+      } /*GenRenderbuffers*/
+
+    public static int GenRenderbuffer()
+      /* allocates and returns a single render-buffer ID. */
+      {
+        return
+            GenRenderbuffers(1)[0];
+      } /*GenRenderbuffer*/
+
+    public static int[] GenTextures
+      (
+        int NrTextures
+      )
+      /* allocates and returns the specified number of texture IDs. */
+      {
+        final int[] Result = new int[NrTextures];
+        gl.glGenTextures(NrTextures, Result, 0);
+        return
+            Result;
+      } /*GenTextures*/
+
+    public static int GenTexture()
+      /* allocates and returns a single texture ID. */
+      {
+        return
+            GenTextures(1)[0];
+      } /*GenTexture*/
+
+/*
+    Queries
+
+    These all require a valid GL context.
+*/
+
+    public static boolean[] GetBooleanv
+      (
+        int Query,
+        int NrElts /* size of array */
+      )
+      /* calls glGetBooleanv and returns the result array. */
+      {
+        final boolean[] Result = new boolean[NrElts];
+        gl.glGetBooleanv(Query, Result, 0);
+        return
+            Result;
+      } /*GetBooleanv*/
+
+    public static boolean GetBoolean
+      (
+        int Query
+      )
+      /* calls glGetBooleanv on a single-element array and returns the element value. */
+      {
+        return
+            GetBooleanv(Query, 1)[0];
+      } /*GetBoolean*/
+
+    public static int[] GetIntegerv
+      (
+        int Query,
+        int NrElts /* size of array */
+      )
+      /* calls glGetIntegerv and returns the result array. */
+      {
+        final int[] Result = new int[NrElts];
+        gl.glGetIntegerv(Query, Result, 0);
+        return
+            Result;
+      } /*GetIntegerv*/
+
+    public static int GetInteger
+      (
+        int Query
+      )
+      /* calls glGetIntegerv on a single-element array and returns the element value. */
+      {
+        return
+            GetIntegerv(Query, 1)[0];
+      } /*GetInteger*/
+
+    public static float[] GetFloatv
+      (
+        int Query,
+        int NrElts /* size of array */
+      )
+      /* calls glGetFloatv and returns the result array. */
+      {
+        final float[] Result = new float[NrElts];
+        gl.glGetFloatv(Query, Result, 0);
+        return
+            Result;
+      } /*GetFloatv*/
+
+    public static float GetFloat
+      (
+        int Query
+      )
+      /* calls glGetFloatv on a single-element array and returns the element value. */
+      {
+        return
+            GetFloatv(Query, 1)[0];
+      } /*GetFloat*/
+
+    public static int GetShaderi
+      (
+        int ID,
+        int PName
+      )
+      {
+        int[] Val = new int[1];
+        gl.glGetShaderiv(ID, PName, Val, 0);
+        return
+            Val[0];
+      } /*GetShaderi*/
+
+    public static boolean GetShaderb
+      (
+        int ID,
+        int PName
+      )
+      {
+        int[] Val = new int[1];
+        gl.glGetShaderiv(ID, PName, Val, 0);
+        return
+            Val[0] != gl.GL_FALSE;
+      } /*GetShaderb*/
+
+    public static int GetProgrami
+      (
+        int ID,
+        int PName
+      )
+      {
+        int[] Val = new int[1];
+        gl.glGetProgramiv(ID, PName, Val, 0);
+        return
+            Val[0];
+      } /*GetProgrami*/
+
+    public static boolean GetProgramb
+      (
+        int ID,
+        int PName
+      )
+      {
+        int[] Val = new int[1];
+        gl.glGetProgramiv(ID, PName, Val, 0);
+        return
+            Val[0] != gl.GL_FALSE;
+      } /*GetProgramb*/
 
   } /*GLUseful*/;
