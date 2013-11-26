@@ -215,11 +215,11 @@ public class GLView
             GLUseful.CheckError("sending view texture image");
             SendBits = false;
           } /*if*/
+        final GLUseful.BlendState PrevBlend = GLUseful.GetBlendState();
         gl.glEnable(gl.GL_BLEND);
         gl.glBlendFunc(gl.GL_ONE, gl.GL_ONE_MINUS_SRC_ALPHA);
         ViewIndices.Draw();
-        gl.glBlendFunc(gl.GL_ONE, gl.GL_ZERO);
-        gl.glDisable(gl.GL_BLEND);
+        GLUseful.SetBlendState(PrevBlend);
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0);
       } /*Draw*/
 
