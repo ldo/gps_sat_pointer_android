@@ -2,7 +2,7 @@ package nz.gen.geek_central.GLUseful;
 /*
     functional 3D vector operations
 
-    Copyright 2011 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    Copyright 2011, 2013 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -86,6 +86,34 @@ public class Vec3f
             v;
       } /*to_floats*/
 
+    public static float to_radians
+      (
+        float angle,
+        boolean from_degrees /* angle is in degrees */
+      )
+      /* returns angle in radians. */
+      {
+        return
+            from_degrees ?
+                (float)Math.toRadians(angle)
+            :
+                angle;
+      } /*to_radians*/
+
+    public static float from_radians
+      (
+        float angle, /* always radians */
+        boolean want_degrees /* result is in degrees */
+      )
+      /* returns angle in radians or degrees, depending on want_degrees. */
+      {
+        return
+            want_degrees ?
+                (float)Math.toDegrees(angle)
+            :
+                angle;
+      } /*from_radians*/
+
     public static Vec3f zero()
       {
         return
@@ -93,6 +121,7 @@ public class Vec3f
       } /*zero*/
 
     public Vec3f neg()
+      /* returns the same-magnitude vector in the opposite direction. */
       {
         return
             new Vec3f(-x, -y, -z, w);
@@ -125,6 +154,35 @@ public class Vec3f
             new Vec3f(x * s, y * s, z * s, w);
       } /*mul*/
 
+    public Vec3f mul
+      (
+        Vec3f v
+      )
+      /* multiplication of corresponding components. */
+      {
+        return
+            new Vec3f(x * v.x, y * v.y, z * v.z);
+      } /*mul*/
+
+    public Vec3f div
+      (
+        float s
+      )
+      {
+        return
+            new Vec3f(x / s, y / s, z / s, w);
+      } /*div*/
+
+    public Vec3f div
+      (
+        Vec3f v
+      )
+      /* division of corresponding components. */
+      {
+        return
+            new Vec3f(x / v.x, y / v.y, z / v.z);
+      } /*div*/
+
     public Vec3f recip()
       {
         return
@@ -135,6 +193,7 @@ public class Vec3f
       (
         Vec3f v
       )
+      /* dot product. */
       {
         return
             v.x * this.x + v.y * this.y + v.z * this.z;
@@ -144,6 +203,7 @@ public class Vec3f
       (
         Vec3f v
       )
+      /* cross product. */
       {
         return
             new Vec3f
@@ -154,18 +214,24 @@ public class Vec3f
               );
       } /*cross*/
 
-    public float azimuth()
+    public float azimuth
+      (
+        boolean want_degrees
+      )
         /* returns the angle between the x-axis and the line from the origin to the point. */
       {
         return
-            (float)Math.atan2(y, x);
+            from_radians((float)Math.atan2(y, x), want_degrees);
       } /*azimuth*/
 
-    public float elevation()
+    public float elevation
+      (
+        boolean want_degrees
+      )
         /* returns the angle between the x-y plane and the line from the origin to the point. */
       {
         return
-            (float)Math.atan2(z, (float)Math.sqrt(x * x + y * y));
+            from_radians((float)Math.atan2(z, Math.hypot(x, y)), want_degrees);
       } /*elevation*/
 
     public float abs()
@@ -176,6 +242,7 @@ public class Vec3f
       } /*abs*/
 
     public Vec3f unit()
+      /* returns the unit vector in the same direction. */
       {
         final float abs = this.abs();
         return
@@ -188,5 +255,12 @@ public class Vec3f
         return
             new Vec3f(x / w, y / w, z / w);
       } /*norm*/
+
+    @Override
+    public String toString()
+      {
+        return
+            String.format("Vec3f(%.3f, %.3f, %.3f, %.3f)", x, y, z, w); /* should I worry about locale? */
+      } /*toString*/
 
   } /*Vec3f*/

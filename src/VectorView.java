@@ -64,7 +64,7 @@ public class VectorView extends android.opengl.GLSurfaceView
     private static class SatInfo
       {
       /* all the GpsSatellite info I care about */
-        final float Azimuth, Elevation; /* radians */
+        final float Azimuth, Elevation; /* degrees */
         final int Prn; /* unique satellite id? Could use to colour-code or something */
         final boolean UsedInFix;
 
@@ -76,8 +76,8 @@ public class VectorView extends android.opengl.GLSurfaceView
             boolean UsedInFix
           )
           {
-            this.Azimuth = (float)Math.toRadians(Azimuth);
-            this.Elevation = (float)Math.toRadians(Elevation);
+            this.Azimuth = Azimuth;
+            this.Elevation = Elevation;
             this.Prn = Prn;
             this.UsedInFix = UsedInFix;
           } /*SatInfo*/
@@ -300,9 +300,9 @@ public class VectorView extends android.opengl.GLSurfaceView
       {
       /* work this out myself--SensorManager.getRotationMatrixFromVector
         isn't available before Android 2.3, API level 9 */
-        OrientAzi = (float)Math.toRadians(Datum[0]);
-        OrientElev = (float)Math.toRadians(Datum[1]);
-        OrientRoll = (float)Math.toRadians(Datum[2]);
+        OrientAzi = Datum[0];
+        OrientElev = Datum[1];
+        OrientRoll = Datum[2];
         requestRender();
       } /*SetOrientation*/
 
@@ -472,11 +472,11 @@ public class VectorView extends android.opengl.GLSurfaceView
           );
         final Mat4f Orientation =
             (
-                Mat4f.rotation(Mat4f.AXIS_Y, OrientRoll)
+                Mat4f.rotation(Mat4f.AXIS_Y, OrientRoll, true)
             ).mul(
-                Mat4f.rotation(Mat4f.AXIS_X, OrientElev)
+                Mat4f.rotation(Mat4f.AXIS_X, OrientElev, true)
             ).mul(
-                Mat4f.rotation(Mat4f.AXIS_Z, OrientAzi)
+                Mat4f.rotation(Mat4f.AXIS_Z, OrientAzi, true)
             );
         gl.glEnable(gl.GL_DEPTH_TEST);
         CompassArrow.Draw
@@ -496,9 +496,9 @@ public class VectorView extends android.opengl.GLSurfaceView
                 final Mat4f SatDirection =
                         Orientation
                     .mul
-                        (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth))
+                        (Mat4f.rotation(Mat4f.AXIS_Z, - ThisSat.Azimuth, true))
                     .mul
-                        (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation));
+                        (Mat4f.rotation(Mat4f.AXIS_X, ThisSat.Elevation, true));
                 if (DoingLabels)
                   {
                     SatLabels.get(ThisSat.Prn).Draw(SatDirection);
