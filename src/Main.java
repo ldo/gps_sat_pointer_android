@@ -594,7 +594,7 @@ public class Main extends android.app.Activity
               } /*if*/
             Message2.setText(MessageBuf.toString());
           }
-        SensorMan = ((SensorManager)getSystemService(SENSOR_SERVICE));
+        SensorMan = (SensorManager)getSystemService(SENSOR_SERVICE);
         OrientationSensor = SensorMan.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         UpdateMessage();
         RunBG = new android.os.Handler();
